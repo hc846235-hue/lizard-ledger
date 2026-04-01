@@ -4,7 +4,8 @@ import react from "@vitejs/plugin-react"
 
 export default defineConfig({
   plugins: [react()],
-  base: "/lizard-ledger/",
+  // GitHub Pages 部署在 /lizard-ledger/ 子路径下
+  base: '/lizard-ledger/',
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -13,5 +14,6 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     allowedHosts: true,
+    port: 5173,
   },
 })
