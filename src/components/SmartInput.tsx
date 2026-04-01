@@ -128,25 +128,25 @@ export function SmartInput({ onConfirm }: SmartInputProps) {
 
   return (
     <div
-      className={`rounded-2xl border transition-all duration-300 overflow-hidden ${
+      className={`rounded-xl md:rounded-2xl border transition-all duration-300 overflow-hidden ${
         successFlash
           ? "border-green-400 bg-green-50 shadow-green-100 shadow-lg"
           : "border-gray-200 bg-white shadow-sm hover:shadow-md"
       }`}
     >
-      {/* 头部 */}
-      <div className="flex items-center gap-2 px-4 pt-4 pb-2">
+      {/* 头部 - 移动端简化 */}
+      <div className="flex items-center gap-2 px-3 md:px-4 pt-3 md:pt-4 pb-2">
         <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 shadow-sm">
           <Sparkles className="h-3.5 w-3.5 text-white" />
         </div>
-        <div>
-          <p className="text-sm font-semibold text-gray-800">智能快速记账</p>
-          <p className="text-[11px] text-gray-400">用自然语言描述，自动识别账目信息</p>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs md:text-sm font-semibold text-gray-800">智能记账</p>
+          <p className="hidden md:block text-[11px] text-gray-400">用自然语言描述，自动识别账目信息</p>
         </div>
         {parsed && (
           <button
             onClick={handleReset}
-            className="ml-auto p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
+            className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
             title="重新输入"
           >
             <RotateCcw className="h-3.5 w-3.5" />
@@ -155,7 +155,7 @@ export function SmartInput({ onConfirm }: SmartInputProps) {
       </div>
 
       {/* 输入区域 */}
-      <div className="px-4 pb-3">
+      <div className="px-3 md:px-4 pb-3">
         <div className="relative">
           <textarea
             ref={textareaRef}
@@ -169,9 +169,9 @@ export function SmartInput({ onConfirm }: SmartInputProps) {
               }
             }}
             onKeyDown={handleKeyDown}
-            placeholder="例：今天卖了2条幼体收了800元（回车解析）"
+            placeholder="例：今天卖了2条幼体收了800元"
             rows={2}
-            className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition-all"
+            className="w-full resize-none rounded-lg md:rounded-xl border border-gray-200 bg-gray-50 px-3 md:px-3.5 py-2 md:py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition-all"
           />
           {inputText && (
             <button
@@ -189,7 +189,7 @@ export function SmartInput({ onConfirm }: SmartInputProps) {
             onClick={handleParse}
             disabled={!inputText.trim() || isParsing}
             size="sm"
-            className="bg-gradient-to-r from-violet-500 to-purple-600 text-white hover:from-violet-600 hover:to-purple-700 shadow-sm text-xs px-4 h-7 cursor-pointer"
+            className="flex-1 md:flex-none bg-gradient-to-r from-violet-500 to-purple-600 text-white hover:from-violet-600 hover:to-purple-700 shadow-sm text-xs md:text-xs px-3 md:px-4 h-9 md:h-7 cursor-pointer font-medium"
           >
             {isParsing ? (
               <>
@@ -208,7 +208,7 @@ export function SmartInput({ onConfirm }: SmartInputProps) {
             onClick={() => setShowExamples((v) => !v)}
             className="text-xs text-violet-500 hover:text-violet-700 flex items-center gap-0.5 cursor-pointer transition-colors"
           >
-            示例参考
+            示例
             {showExamples ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
           </button>
         </div>
@@ -220,7 +220,7 @@ export function SmartInput({ onConfirm }: SmartInputProps) {
               <button
                 key={ex}
                 onClick={() => handleExampleClick(ex)}
-                className="text-[11px] px-2.5 py-1 rounded-full bg-violet-50 text-violet-600 border border-violet-200 hover:bg-violet-100 cursor-pointer transition-colors"
+                className="text-[11px] px-2 py-1 rounded-full bg-violet-50 text-violet-600 border border-violet-200 hover:bg-violet-100 cursor-pointer transition-colors"
               >
                 {ex}
               </button>
@@ -234,7 +234,7 @@ export function SmartInput({ onConfirm }: SmartInputProps) {
         <div className="border-t border-gray-100 bg-gray-50/80">
           {/* 结果摘要行 */}
           <div
-            className="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-gray-100/60 transition-colors"
+            className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-2.5 cursor-pointer hover:bg-gray-100/60 transition-colors"
             onClick={() => setShowDetail((v) => !v)}
           >
             {parsed.confidence >= 0.5 ? (
@@ -243,9 +243,9 @@ export function SmartInput({ onConfirm }: SmartInputProps) {
               <AlertCircle className="h-4 w-4 text-yellow-500 shrink-0" />
             )}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
                 <span
-                  className={`text-xs font-semibold px-1.5 py-0.5 rounded-md ${
+                  className={`text-[11px] md:text-xs font-semibold px-1.5 py-0.5 rounded-md ${
                     editType === "income"
                       ? "bg-green-100 text-green-700"
                       : "bg-red-100 text-red-700"
@@ -253,16 +253,16 @@ export function SmartInput({ onConfirm }: SmartInputProps) {
                 >
                   {editType === "income" ? "收入" : "支出"}
                 </span>
-                <span className="text-sm font-bold text-gray-800">
+                <span className="text-sm md:text-sm font-bold text-gray-800">
                   ¥{editAmount || "—"}
                 </span>
-                <span className="text-xs text-gray-500">{editCategory}</span>
-                <span className="text-[11px] text-gray-400">{editDate}</span>
+                <span className="text-[11px] md:text-xs text-gray-500 truncate">{editCategory}</span>
+                <span className="text-[11px] md:text-[11px] text-gray-400">{editDate}</span>
               </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className={`text-[11px] font-medium ${confidenceColor}`}>
-                置信度{confidenceLabel}
+            <div className="flex items-center gap-1 md:gap-1.5 shrink-0">
+              <span className={`text-[10px] md:text-[11px] font-medium ${confidenceColor}`}>
+                {confidenceLabel}
               </span>
               {showDetail ? (
                 <ChevronUp className="h-3.5 w-3.5 text-gray-400" />
@@ -274,12 +274,12 @@ export function SmartInput({ onConfirm }: SmartInputProps) {
 
           {/* 可编辑详情 */}
           {showDetail && (
-            <div className="px-4 pb-4 space-y-3">
+            <div className="px-3 md:px-4 pb-3 md:pb-4 space-y-2.5 md:space-y-3">
               {/* 识别依据 */}
               {parsed.hints.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {parsed.hints.map((hint, i) => (
-                    <span key={i} className="text-[10px] px-2 py-0.5 bg-violet-50 text-violet-500 border border-violet-100 rounded-full">
+                    <span key={i} className="text-[10px] px-1.5 py-0.5 bg-violet-50 text-violet-500 border border-violet-100 rounded-full">
                       {hint}
                     </span>
                   ))}
@@ -287,7 +287,7 @@ export function SmartInput({ onConfirm }: SmartInputProps) {
               )}
 
               {/* 字段网格 */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2.5 md:gap-3">
                 {/* 日期 */}
                 <div>
                   <label className="text-[11px] text-gray-500 mb-1 block">日期</label>
@@ -295,7 +295,7 @@ export function SmartInput({ onConfirm }: SmartInputProps) {
                     type="date"
                     value={editDate}
                     onChange={(e) => setEditDate(e.target.value)}
-                    className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-violet-400"
+                    className="w-full text-xs border border-gray-200 rounded-lg px-2 md:px-2.5 py-2 md:py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-violet-400 h-10"
                   />
                 </div>
 
@@ -309,7 +309,7 @@ export function SmartInput({ onConfirm }: SmartInputProps) {
                     value={editAmount}
                     onChange={(e) => setEditAmount(e.target.value)}
                     placeholder="请输入金额"
-                    className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-violet-400"
+                    className="w-full text-xs border border-gray-200 rounded-lg px-2 md:px-2.5 py-2 md:py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-violet-400 h-10"
                   />
                 </div>
 
@@ -321,7 +321,7 @@ export function SmartInput({ onConfirm }: SmartInputProps) {
                       <button
                         key={t}
                         onClick={() => handleTypeChange(t)}
-                        className={`flex-1 text-xs py-1.5 rounded-lg border transition-all cursor-pointer ${
+                        className={`flex-1 text-xs py-2 md:py-1.5 rounded-lg border transition-all cursor-pointer min-h-[40px] ${
                           editType === t
                             ? t === "income"
                               ? "bg-green-500 text-white border-green-500"
@@ -341,7 +341,7 @@ export function SmartInput({ onConfirm }: SmartInputProps) {
                   <select
                     value={editCategory}
                     onChange={(e) => handleCategoryChange(e.target.value)}
-                    className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-violet-400 cursor-pointer"
+                    className="w-full text-xs border border-gray-200 rounded-lg px-2 md:px-2 py-2 md:py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-violet-400 cursor-pointer h-10"
                   >
                     {currentCategories.map((cat) => (
                       <option key={cat.name} value={cat.name}>
@@ -357,7 +357,7 @@ export function SmartInput({ onConfirm }: SmartInputProps) {
                   <select
                     value={editSubCategory}
                     onChange={(e) => setEditSubCategory(e.target.value)}
-                    className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-violet-400 cursor-pointer"
+                    className="w-full text-xs border border-gray-200 rounded-lg px-2 md:px-2.5 py-2 md:py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-violet-400 cursor-pointer h-10"
                   >
                     {currentSubCategories.map((sub) => (
                       <option key={sub} value={sub}>{sub}</option>
@@ -373,7 +373,7 @@ export function SmartInput({ onConfirm }: SmartInputProps) {
                     value={editDescription}
                     onChange={(e) => setEditDescription(e.target.value)}
                     placeholder="账目描述"
-                    className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-violet-400"
+                    className="w-full text-xs border border-gray-200 rounded-lg px-2 md:px-2.5 py-2 md:py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-violet-400 h-10"
                   />
                 </div>
               </div>
@@ -383,7 +383,7 @@ export function SmartInput({ onConfirm }: SmartInputProps) {
                 <Button
                   onClick={handleConfirm}
                   disabled={!editAmount || parseFloat(editAmount) <= 0}
-                  className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 h-8 text-xs cursor-pointer"
+                  className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 h-10 md:h-8 text-xs font-medium cursor-pointer"
                 >
                   <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
                   确认新增
@@ -391,7 +391,7 @@ export function SmartInput({ onConfirm }: SmartInputProps) {
                 <Button
                   variant="outline"
                   onClick={handleReset}
-                  className="h-8 text-xs px-3 cursor-pointer"
+                  className="h-10 md:h-8 text-xs px-3 cursor-pointer"
                 >
                   取消
                 </Button>

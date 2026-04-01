@@ -73,26 +73,26 @@ export function TransactionList({ transactions, onEdit, onDelete }: TransactionL
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 md:space-y-3">
       {/* 搜索栏 */}
       <div className="flex gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400 pointer-events-none" />
+          <Search className="absolute left-3 md:left-3 top-2.5 md:top-2.5 h-4 w-4 text-gray-400 pointer-events-none" />
           <Input
             placeholder="搜索描述、分类、备注..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-            className="pl-9"
+            className="pl-9 md:pl-9 h-11 md:h-auto"
           />
         </div>
         <Button
           variant="outline"
           size="sm"
           onClick={() => setShowFilters(!showFilters)}
-          className="gap-1.5 shrink-0"
+          className="gap-1.5 shrink-0 h-11 md:h-auto"
         >
           <SlidersHorizontal className="h-4 w-4" />
-          筛选
+          <span className="hidden sm:inline">筛选</span>
           {showFilters ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
         </Button>
       </div>
@@ -100,13 +100,14 @@ export function TransactionList({ transactions, onEdit, onDelete }: TransactionL
       {/* 展开筛选项 */}
       {showFilters && (
         <Card className="border-dashed border-gray-200 shadow-none bg-gray-50/50">
-          <CardContent className="p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <CardContent className="p-3 md:p-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 md:gap-3">
               <div>
-                <label className="text-xs text-gray-500 mb-1.5 block font-medium">收支类型</label>
+                <label className="text-xs text-gray-500 mb-1 md:mb-1.5 block font-medium">收支类型</label>
                 <SelectNative
                   value={filterType}
                   onChange={(e) => { setFilterType(e.target.value as "all" | "income" | "expense"); setPage(1) }}
+                  className="h-11 md:h-auto"
                 >
                   <option value="all">全部</option>
                   <option value="income">收入</option>
@@ -114,11 +115,12 @@ export function TransactionList({ transactions, onEdit, onDelete }: TransactionL
                 </SelectNative>
               </div>
               <div>
-                <label className="text-xs text-gray-500 mb-1.5 block font-medium">分类</label>
+                <label className="text-xs text-gray-500 mb-1 md:mb-1.5 block font-medium">分类</label>
                 <SelectNative
                   value={filterCategory}
                   onChange={(e) => { setFilterCategory(e.target.value); setPage(1) }}
                   placeholder="所有分类"
+                  className="h-11 md:h-auto"
                 >
                   {ALL_CATEGORIES.map((c) => (
                     <option key={c.name} value={c.name}>
@@ -128,11 +130,12 @@ export function TransactionList({ transactions, onEdit, onDelete }: TransactionL
                 </SelectNative>
               </div>
               <div>
-                <label className="text-xs text-gray-500 mb-1.5 block font-medium">月份</label>
+                <label className="text-xs text-gray-500 mb-1 md:mb-1.5 block font-medium">月份</label>
                 <SelectNative
                   value={filterMonth}
                   onChange={(e) => { setFilterMonth(e.target.value); setPage(1) }}
                   placeholder="所有月份"
+                  className="h-11 md:h-auto"
                 >
                   {months.map((m) => (
                     <option key={m} value={m}>{m.replace("-", "年") + "月"}</option>
@@ -143,7 +146,7 @@ export function TransactionList({ transactions, onEdit, onDelete }: TransactionL
             {(filterType !== "all" || filterCategory || filterMonth) && (
               <button
                 onClick={() => { setFilterType("all"); setFilterCategory(""); setFilterMonth(""); setPage(1) }}
-                className="mt-3 text-xs text-primary hover:underline cursor-pointer"
+                className="mt-2.5 md:mt-3 text-xs text-primary hover:underline cursor-pointer"
               >
                 清除筛选条件
               </button>
@@ -153,7 +156,7 @@ export function TransactionList({ transactions, onEdit, onDelete }: TransactionL
       )}
 
       {/* 结果统计 */}
-      <div className="flex items-center justify-between text-sm text-gray-500">
+      <div className="flex items-center justify-between text-xs md:text-sm text-gray-500">
         <span>共 <strong className="text-gray-700">{filtered.length}</strong> 条记录</span>
         {totalPages > 1 && (
           <span>第 {page}/{totalPages} 页</span>
@@ -162,9 +165,9 @@ export function TransactionList({ transactions, onEdit, onDelete }: TransactionL
 
       {/* 列表 */}
       {paginated.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
-          <div className="text-4xl mb-3">🦎</div>
-          <div className="text-sm">暂无账目记录</div>
+        <div className="text-center py-12 md:py-16 text-gray-400">
+          <div className="text-3xl md:text-4xl mb-2 md:mb-3">🦎</div>
+          <div className="text-xs md:text-sm">暂无账目记录</div>
         </div>
       ) : (
         <div className="space-y-2">
@@ -173,11 +176,12 @@ export function TransactionList({ transactions, onEdit, onDelete }: TransactionL
             return (
               <div
                 key={tx.id}
-                className="flex items-center gap-3 p-3.5 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow group"
+                className="flex items-center gap-2 md:gap-3 p-3 md:p-3.5 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow group active:bg-gray-50"
+                onClick={() => onEdit(tx)}
               >
                 {/* 图标 */}
                 <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-lg shrink-0"
+                  className="w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center text-base md:text-lg shrink-0"
                   style={{ backgroundColor: (catInfo?.color || "#94a3b8") + "20" }}
                 >
                   {catInfo?.icon || "💼"}
@@ -185,28 +189,28 @@ export function TransactionList({ transactions, onEdit, onDelete }: TransactionL
 
                 {/* 主要信息 */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
                     <span className="text-sm font-medium text-gray-800 truncate">
                       {tx.description}
                     </span>
                     <Badge
                       variant={tx.type === "income" ? "success" : "destructive"}
-                      className="text-xs shrink-0"
+                      className="text-[11px] md:text-xs shrink-0"
                     >
                       {tx.type === "income" ? "收入" : "支出"}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs text-gray-400">{tx.date}</span>
-                    <span className="text-xs text-gray-400">·</span>
-                    <span className="text-xs text-gray-500">
+                  <div className="flex items-center gap-1.5 md:gap-2 mt-0.5">
+                    <span className="text-[11px] md:text-xs text-gray-400">{tx.date}</span>
+                    <span className="text-[11px] md:text-xs text-gray-400">·</span>
+                    <span className="text-[11px] md:text-xs text-gray-500 truncate">
                       {tx.category}
                       {tx.subCategory ? ` · ${tx.subCategory}` : ""}
                     </span>
                     {tx.notes && (
                       <>
-                        <span className="text-xs text-gray-400">·</span>
-                        <span className="text-xs text-gray-400 truncate max-w-32">{tx.notes}</span>
+                        <span className="text-[11px] md:text-xs text-gray-400">·</span>
+                        <span className="text-[11px] md:text-xs text-gray-400 truncate max-w-24 md:max-w-32">{tx.notes}</span>
                       </>
                     )}
                   </div>
@@ -214,7 +218,7 @@ export function TransactionList({ transactions, onEdit, onDelete }: TransactionL
 
                 {/* 金额 */}
                 <div
-                  className={`text-base font-bold shrink-0 ${
+                  className={`text-sm md:text-base font-bold shrink-0 ${
                     tx.type === "income" ? "text-green-600" : "text-red-500"
                   }`}
                 >

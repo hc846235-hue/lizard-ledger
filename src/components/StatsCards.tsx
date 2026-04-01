@@ -17,40 +17,40 @@ function formatAmount(amount: number) {
 
 export function StatsCards({ totalIncome, totalExpense, netProfit, count }: StatsCardsProps) {
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 md:gap-4">
       {/* 总收入 */}
       <Card className="border-0 shadow-md bg-gradient-to-br from-green-50 to-emerald-50">
-        <CardContent className="p-5">
-          <div className="flex items-start justify-between mb-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <TrendingUp className="h-5 w-5 text-green-600" />
+        <CardContent className="p-3 md:p-5">
+          <div className="flex items-start justify-between mb-2 md:mb-3">
+            <div className="p-1.5 md:p-2 bg-green-100 rounded-lg">
+              <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-green-600" />
             </div>
-            <span className="text-xs text-green-600 font-medium bg-green-100 px-2 py-0.5 rounded-full">
+            <span className="text-[11px] md:text-xs text-green-600 font-medium bg-green-100 px-1.5 md:px-2 py-0.5 rounded-full">
               收入
             </span>
           </div>
-          <div className="text-2xl font-bold text-green-700">
+          <div className="text-lg md:text-2xl font-bold text-green-700">
             ¥{formatAmount(totalIncome)}
           </div>
-          <div className="text-xs text-green-600 mt-1">本期总收入</div>
+          <div className="text-[11px] md:text-xs text-green-600 mt-0.5 md:mt-1">本期总收入</div>
         </CardContent>
       </Card>
 
       {/* 总支出 */}
       <Card className="border-0 shadow-md bg-gradient-to-br from-red-50 to-rose-50">
-        <CardContent className="p-5">
-          <div className="flex items-start justify-between mb-3">
-            <div className="p-2 bg-red-100 rounded-lg">
-              <TrendingDown className="h-5 w-5 text-red-500" />
+        <CardContent className="p-3 md:p-5">
+          <div className="flex items-start justify-between mb-2 md:mb-3">
+            <div className="p-1.5 md:p-2 bg-red-100 rounded-lg">
+              <TrendingDown className="h-4 w-4 md:h-5 md:w-5 text-red-500" />
             </div>
-            <span className="text-xs text-red-600 font-medium bg-red-100 px-2 py-0.5 rounded-full">
+            <span className="text-[11px] md:text-xs text-red-600 font-medium bg-red-100 px-1.5 md:px-2 py-0.5 rounded-full">
               支出
             </span>
           </div>
-          <div className="text-2xl font-bold text-red-600">
+          <div className="text-lg md:text-2xl font-bold text-red-600">
             ¥{formatAmount(totalExpense)}
           </div>
-          <div className="text-xs text-red-500 mt-1">本期总支出</div>
+          <div className="text-[11px] md:text-xs text-red-500 mt-0.5 md:mt-1">本期总支出</div>
         </CardContent>
       </Card>
 
@@ -62,21 +62,21 @@ export function StatsCards({ totalIncome, totalExpense, netProfit, count }: Stat
             : "from-orange-50 to-amber-50"
         }`}
       >
-        <CardContent className="p-5">
-          <div className="flex items-start justify-between mb-3">
+        <CardContent className="p-3 md:p-5">
+          <div className="flex items-start justify-between mb-2 md:mb-3">
             <div
-              className={`p-2 rounded-lg ${
+              className={`p-1.5 md:p-2 rounded-lg ${
                 netProfit >= 0 ? "bg-blue-100" : "bg-orange-100"
               }`}
             >
               <DollarSign
-                className={`h-5 w-5 ${
+                className={`h-4 w-4 md:h-5 md:w-5 ${
                   netProfit >= 0 ? "text-blue-600" : "text-orange-500"
                 }`}
               />
             </div>
             <span
-              className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+              className={`text-[11px] md:text-xs font-medium px-1.5 md:px-2 py-0.5 rounded-full ${
                 netProfit >= 0
                   ? "text-blue-600 bg-blue-100"
                   : "text-orange-600 bg-orange-100"
@@ -86,14 +86,14 @@ export function StatsCards({ totalIncome, totalExpense, netProfit, count }: Stat
             </span>
           </div>
           <div
-            className={`text-2xl font-bold ${
+            className={`text-lg md:text-2xl font-bold ${
               netProfit >= 0 ? "text-blue-700" : "text-orange-600"
             }`}
           >
             {netProfit >= 0 ? "+" : ""}¥{formatAmount(netProfit)}
           </div>
           <div
-            className={`text-xs mt-1 ${
+            className={`text-[11px] md:text-xs mt-0.5 md:mt-1 ${
               netProfit >= 0 ? "text-blue-500" : "text-orange-500"
             }`}
           >
@@ -104,17 +104,17 @@ export function StatsCards({ totalIncome, totalExpense, netProfit, count }: Stat
 
       {/* 账目数 */}
       <Card className="border-0 shadow-md bg-gradient-to-br from-purple-50 to-violet-50">
-        <CardContent className="p-5">
-          <div className="flex items-start justify-between mb-3">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <BarChart3 className="h-5 w-5 text-purple-600" />
+        <CardContent className="p-3 md:p-5">
+          <div className="flex items-start justify-between mb-2 md:mb-3">
+            <div className="p-1.5 md:p-2 bg-purple-100 rounded-lg">
+              <BarChart3 className="h-4 w-4 md:h-5 md:w-5 text-purple-600" />
             </div>
-            <span className="text-xs text-purple-600 font-medium bg-purple-100 px-2 py-0.5 rounded-full">
+            <span className="text-[11px] md:text-xs text-purple-600 font-medium bg-purple-100 px-1.5 md:px-2 py-0.5 rounded-full">
               账目
             </span>
           </div>
-          <div className="text-2xl font-bold text-purple-700">{count}</div>
-          <div className="text-xs text-purple-500 mt-1">总账目条数</div>
+          <div className="text-lg md:text-2xl font-bold text-purple-700">{count}</div>
+          <div className="text-[11px] md:text-xs text-purple-500 mt-0.5 md:mt-1">总账目条数</div>
         </CardContent>
       </Card>
     </div>

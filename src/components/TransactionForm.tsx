@@ -76,15 +76,15 @@ export function TransactionForm({ open, onClose, onSubmit, editData }: Transacti
           <DialogTitle>{editData ? "编辑账目" : "新增账目"}</DialogTitle>
         </DialogHeader>
 
-        <DialogBody className="space-y-4">
+        <DialogBody className="space-y-3 md:space-y-4">
           {/* 收入/支出切换 */}
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">类型</label>
+            <label className="text-xs md:text-sm font-medium text-gray-700 mb-2 block">类型</label>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => handleTypeChange("income")}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer border ${
+                className={`flex-1 py-2.5 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all cursor-pointer border min-h-[44px] ${
                   form.type === "income"
                     ? "bg-green-500 text-white border-green-500 shadow-md"
                     : "bg-white text-gray-600 border-gray-200 hover:border-green-300"
@@ -95,7 +95,7 @@ export function TransactionForm({ open, onClose, onSubmit, editData }: Transacti
               <button
                 type="button"
                 onClick={() => handleTypeChange("expense")}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer border ${
+                className={`flex-1 py-2.5 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all cursor-pointer border min-h-[44px] ${
                   form.type === "expense"
                     ? "bg-red-500 text-white border-red-500 shadow-md"
                     : "bg-white text-gray-600 border-gray-200 hover:border-red-300"
@@ -107,18 +107,19 @@ export function TransactionForm({ open, onClose, onSubmit, editData }: Transacti
           </div>
 
           {/* 日期 + 金额 */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2.5 md:gap-3">
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-1.5 block">日期 *</label>
+              <label className="text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-1.5 block">日期 *</label>
               <Input
                 type="date"
                 value={form.date}
                 onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
                 required
+                className="h-11 md:h-auto"
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-1.5 block">金额（元）*</label>
+              <label className="text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-1.5 block">金额（元）*</label>
               <Input
                 type="number"
                 min="0"
@@ -127,19 +128,21 @@ export function TransactionForm({ open, onClose, onSubmit, editData }: Transacti
                 value={form.amount}
                 onChange={(e) => setForm((p) => ({ ...p, amount: e.target.value }))}
                 required
+                className="h-11 md:h-auto"
               />
             </div>
           </div>
 
           {/* 分类 + 子分类 */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2.5 md:gap-3">
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-1.5 block">分类 *</label>
+              <label className="text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-1.5 block">分类 *</label>
               <SelectNative
                 value={form.category}
                 onChange={(e) => handleCategoryChange(e.target.value)}
                 placeholder="请选择分类"
                 required
+                className="h-11 md:h-auto"
               >
                 {categories.map((c) => (
                   <option key={c.name} value={c.name}>
@@ -149,12 +152,13 @@ export function TransactionForm({ open, onClose, onSubmit, editData }: Transacti
               </SelectNative>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-1.5 block">子分类</label>
+              <label className="text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-1.5 block">子分类</label>
               <SelectNative
                 value={form.subCategory}
                 onChange={(e) => setForm((p) => ({ ...p, subCategory: e.target.value }))}
                 placeholder="请选择子分类"
                 disabled={!selectedCategory}
+                className="h-11 md:h-auto"
               >
                 {selectedCategory?.subCategories.map((s) => (
                   <option key={s} value={s}>
@@ -167,18 +171,19 @@ export function TransactionForm({ open, onClose, onSubmit, editData }: Transacti
 
           {/* 描述 */}
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-1.5 block">描述 *</label>
+            <label className="text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-1.5 block">描述 *</label>
             <Input
               placeholder="例：出售印尼蓝舌幼体 ×2"
               value={form.description}
               onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
               required
+              className="h-11 md:h-auto"
             />
           </div>
 
           {/* 备注 */}
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-1.5 block">备注</label>
+            <label className="text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-1.5 block">备注</label>
             <Textarea
               placeholder="选填：相关备注信息"
               rows={2}

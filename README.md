@@ -117,6 +117,140 @@ lizard-ledger/
 - **云数据库**：腾讯云 CloudBase @cloudbase/js-sdk
 - **Excel 导出**：xlsx
 
+## CloudBase 集成架构
+
+### 项目结构
+
+```
+lizard-ledger/
+├── src/
+│   ├── lib/
+│   │   └── cloudbase/           # CloudBase 集成模块
+│   │       ├── config.ts        # CloudBase 配置
+│   │       ├── index.ts         # SDK 初始化
+│   │       └── billService.ts   # 账单数据服务
+│   └── types/
+│       └── bill.ts             # 账单类型定义
+├── .env                         # 环境变量（本地）
+└── .env.example                 # 环境变量示例
+```
+
+### 核心功能模块
+
+#### 1. CloudBase SDK 初始化 (`lib/cloudbase/index.ts`)
+
+提供 CloudBase 应用实例、数据库访问和认证功能：
+
+```typescript
+// 初始化 SDK
+import { initCloudbase, getDatabase, getAuth } from '@/lib/cloudbase';
+
+initCloudbase(); // 必须在应用启动时同步初始化
+const db = getDatabase(); // 获取数据库实例
+const auth = getAuth(); // 获取认证实例
+```
+
+**关键特性**：
+- 同步初始化，避免动态导入
+- 单例模式，全局共享实例
+- 支持匿名登录
+
+#### 2. 账单数据服务 (`lib/cloudbase/billService.ts`)
+
+提供完整的账单 CRUD 操作：
+
+```typescript
+import {
+  createBill,
+  getBills,
+  updateBill,
+  deleteBill,
+  getBillStatistics
+} from '@/lib/cloudbase/billService';
+
+// 创建账单
+const bill = await createBill({
+  type: 'expense',
+  amount: 100,
+  category: 'food',
+  description: '午餐',
+  date: '2026-04-01',
+  userId: 'user123'
+});
+
+// 查询账单
+const bills = await getBills({
+  type: 'expense',
+  startDate: '2026-04-01',
+  endDate: '2026-04-30'
+});
+
+// 统计数据
+const stats = await getBillStatistics(filter);
+```
+
+**支持功能**：
+- ✅ 增删改查（CRUD）
+- ✅ 多条件查询过滤
+- ✅ 分页和排序
+- ✅ 数据统计分析
+- ✅ 按日期范围查询
+
+#### 3. 账单类型定义 (`types/bill.ts`)
+
+完整的 TypeScript 类型系统：
+
+```typescript
+export interface Bill {
+  _id?: string;
+  type: BillType;           // 'expense' | 'income'
+  amount: number;
+  category: BillCategory;
+  description: string;
+  date: string;
+  userId: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+```
+
+**类型安全**：
+- 强类型检查
+- 代码自动补全
+- 减少运行时错误
+
+### 数据库集合结构
+
+#### `bills` 集合
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `_id` | string | 自动生成的主键 |
+| `type` | string | 账单类型：expense/income |
+| `amount` | number | 金额 |
+| `category` | string | 分类 |
+| `description` | string | 描述 |
+| `date` | string | 日期（ISO 8601） |
+| `userId` | string | 用户 ID |
+| `createdAt` | string | 创建时间 |
+| `updatedAt` | string | 更新时间 |
+
+### 认证配置
+
+当前使用匿名登录，适合个人使用场景：
+
+```typescript
+// .env
+VITE_CLOUDBASE_ENV_ID=mm223-7gozbhmt7b381a50
+VITE_CLOUDBASE_AUTH=anonymous
+```
+
+**未来可扩展**：
+- 短信验证码登录
+- 邮箱登录
+- 微信登录
+- 自定义认证
+
 ## 主要功能说明
 
 ### 1. 智能快速记账
@@ -247,7 +381,18 @@ AX爬宠繁育基地
 
 ## 更新日志
 
-### v0.0.1 (2026-04-01)
+### v0.1.0 (2026-04-01)
+
+- ✨ 集成腾讯云 CloudBase SDK
+- ✨ 实现完整的账单数据模型和类型定义
+- ✨ 创建 CloudBase 初始化模块和配置
+- ✨ 实现账单数据的完整 CRUD 操作
+- ✨ 支持多条件查询和过滤
+- ✨ 支持数据统计分析
+- ✨ 添加环境变量配置
+- ✨ 更新项目文档
+
+### v0.0.1 (2026-03-31)
 
 - ✨ 初始版本发布
 - ✨ 支持本地数据存储（LocalStorage）
