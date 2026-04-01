@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { Plus, BookOpen, BarChart2, List, LogOut, KeyRound, FileText, Download } from "lucide-react"
+import React, { useState, useEffect } from "react"
+import { Plus, BookOpen, BarChart2, List, LogOut, KeyRound, FileText, Download, Cloud, Database } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { StatsCards } from "@/components/StatsCards"
 import { Charts } from "@/components/Charts"
@@ -12,14 +12,33 @@ import { MonthReport } from "@/components/MonthReport"
 import { SmartInput } from "@/components/SmartInput"
 import { useTransactions } from "@/hooks/useTransactions"
 import { useAuth } from "@/hooks/useAuth"
+import { useCloudTransactions } from "@/hooks/useCloudTransactions"
 import { exportTransactionsToExcel } from "@/utils/exportExcel"
 import type { Transaction } from "@/types"
 
 type Tab = "overview" | "detail" | "report"
 type ReportSubTab = "year" | "month"
+type DataSource = "local" | "cloud"
 
 export default function App() {
-  const { transactions, addTransaction, updateTransaction, deleteTransaction, getStats } = useTransactions()
+  console.log('App component rendering...')
+
+  // 数据源切换 - 默认使用本地存储
+  const [dataSource, setDataSource] = useState<DataSource>("local")
+  const localHook = useTransactions()
+  const cloudHook = useCloudTransactions()
+
+  console.log('Hooks loaded:', {
+    dataSource,
+    cloudLoading: cloudHook.loading,
+    localTransactions: localHook.transactions.length,
+    cloudTransactions: cloudHook.transactions.length
+  })
+
+  // 根据数据源选择对应的 hook
+  const { transactions, addTransaction, updateTransaction, deleteTransaction, getStats, loading: cloudLoading, refresh: cloudRefresh } =
+    dataSource === "cloud" ? cloudHook : localHook
+
   const { isLoggedIn, login, logout, changePassword } = useAuth()
   const [activeTab, setActiveTab] = useState<Tab>("overview")
   const [reportSubTab, setReportSubTab] = useState<ReportSubTab>("year")
@@ -29,7 +48,15 @@ export default function App() {
   const [changePwdOpen, setChangePwdOpen] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
+  console.log('State initialized:', {
+    activeTab,
+    loggedIn,
+    dataSource,
+    transactionsCount: transactions.length
+  })
+
   const stats = getStats()
+  console.log('Stats calculated:', stats)
 
   // ── 登录处理 ──
   const handleLogin = (password: string): boolean => {
@@ -122,6 +149,34 @@ export default function App() {
 
           {/* 右侧操作区 */}
           <div className="flex items-center gap-2">
+            {/* 数据源切换 */}
+            <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
+              <button
+                onClick={() => setDataSource("cloud")}
+                className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-all cursor-pointer ${
+                  dataSource === "cloud"
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+                title="使用云端数据库（数据永久保存）"
+              >
+                <Cloud className="h-3.5 w-3.5" />
+                云端
+              </button>
+              <button
+                onClick={() => setDataSource("local")}
+                className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-all cursor-pointer ${
+                  dataSource === "local"
+                    ? "bg-white text-gray-800 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+                title="使用本地存储（浏览器缓存）"
+              >
+                <Database className="h-3.5 w-3.5" />
+                本地
+              </button>
+            </div>
+
             <Button
               size="sm"
               onClick={() => setFormOpen(true)}

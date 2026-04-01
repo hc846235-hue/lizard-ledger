@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CloudBase 测试</title>
+</head>
+<body>
+  <h1>CloudBase 连接测试</h1>
+  <div id="result"></div>
+
+  <script type="module">
+    import cloudbase from 'https://unpkg.com/@cloudbase/js-sdk@1.7.4/dist/cloudbase.js';
+
+    const result = document.getElementById('result');
+    result.innerHTML = '<p>正在初始化 CloudBase...</p>';
+
+    try {
+      const app = cloudbase.init({
+        env: 'mm223-7gozbhmt7b381a50',
+      });
+
+      const db = app.database();
+      result.innerHTML += '<p style="color: green;">✓ CloudBase 初始化成功</p>';
+
+      // 尝试获取集合
+      const collection = db.collection('bills');
+      const { data } = await collection.get();
+      
+      result.innerHTML += `<p style="color: green;">✓ 数据库连接成功，找到 ${data.length} 条记录</p>`;
+    } catch (error) {
+      result.innerHTML += `<p style="color: red;">✗ 错误: ${error.message}</p>`;
+      console.error('CloudBase 错误:', error);
+    }
+  </script>
+</body>
+</html>
