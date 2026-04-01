@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Search, Pencil, Trash2, SlidersHorizontal, ChevronDown, ChevronUp } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -7,6 +7,10 @@ import { SelectNative } from "@/components/ui/select-native"
 import { Card, CardContent } from "@/components/ui/card"
 import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from "@/types"
 import type { Transaction } from "@/types"
+
+// 滑动手势阈值
+const SWIPE_THRESHOLD = 80
+const SWIPE_VELOCITY = 0.3
 
 interface TransactionListProps {
   transactions: Transaction[]
@@ -34,7 +38,15 @@ export function TransactionList({ transactions, onEdit, onDelete }: TransactionL
   const [showFilters, setShowFilters] = useState(false)
   const [page, setPage] = useState(1)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [swipedId, setSwipedId] = useState<string | null>(null)
   const PAGE_SIZE = 15
+
+  // 点击其他区域时关闭滑动状态
+  const handleClickOutside = (e: React.MouseEvent) => {
+    if (swipedId && !(e.target as HTMLElement).closest('[data-swipeable]')) {
+      setSwipedId(null)
+    }
+  }
 
   // 收集所有月份供筛选
   const months = [...new Set(transactions.map((t) => t.date.slice(0, 7)))].sort().reverse()
@@ -62,9 +74,13 @@ export function TransactionList({ transactions, onEdit, onDelete }: TransactionL
     if (confirmDeleteId === id) {
       onDelete(id)
       setConfirmDeleteId(null)
+      setSwipedId(null)
     } else {
       setConfirmDeleteId(id)
-      setTimeout(() => setConfirmDeleteId(null), 3000)
+      setTimeout(() => {
+        setConfirmDeleteId(null)
+        setSwipedId(null)
+      }, 3000)
     }
   }
 
@@ -72,8 +88,167 @@ export function TransactionList({ transactions, onEdit, onDelete }: TransactionL
     return ALL_CATEGORIES.find((c) => c.name === name)
   }
 
+  // 手势处理组件
+  function SwipeableTransaction({ tx, catInfo }: { tx: Transaction; catInfo?: any }) {
+    const containerRef = useRef<HTMLDivElement>(null)
+    const startX = useRef(0)
+    const currentX = useRef(0)
+    const isDragging = useRef(false)
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+      startX.current = e.touches[0].clientX
+      currentX.current = 0
+      isDragging.current = false
+    }
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+      const diff = e.touches[0].clientX - startX.current
+      // 只响应左滑（向左）
+      if (diff < 0 && Math.abs(diff) > 10) {
+        isDragging.current = true
+        currentX.current = Math.max(diff, -SWIPE_THRESHOLD * 1.5)
+        if (containerRef.current) {
+          containerRef.current.style.transform = `translateX(${currentX.current}px)`
+        }
+      }
+    }
+
+    const handleTouchEnd = () => {
+      if (isDragging.current && Math.abs(currentX.current) > SWIPE_THRESHOLD) {
+        // 达到滑动阈值，显示删除按钮
+        setSwipedId(tx.id)
+      }
+      // 重置位置
+      if (containerRef.current) {
+        containerRef.current.style.transform = "translateX(0)"
+      }
+      currentX.current = 0
+      isDragging.current = false
+    }
+
+    const isSwiped = swipedId === tx.id
+    const showConfirm = confirmDeleteId === tx.id
+
+    return (
+      <div className="relative overflow-hidden mb-2">
+        {/* 删除按钮背景 */}
+        <div
+          className={`absolute right-0 top-0 bottom-0 bg-red-500 text-white flex items-center justify-end pr-6 transition-all duration-200 ${
+            isSwiped ? "w-32" : "w-0"
+          }`}
+        >
+          {showConfirm ? (
+            <div className="flex items-center gap-1">
+              <span className="text-sm">确认删除</span>
+              <Trash2 className="h-4 w-4" />
+            </div>
+          ) : (
+            <div className="flex items-center gap-1">
+              <span className="text-sm">删除</span>
+              <Trash2 className="h-4 w-4" />
+            </div>
+          )}
+        </div>
+
+        {/* 可滑动的内容 */}
+        <div
+          ref={containerRef}
+          data-swipeable="true"
+          className={`relative bg-white transition-transform duration-200 ${
+            isSwiped ? "translate-x-[-6rem]" : ""
+          }`}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div
+            className="flex items-center gap-2 md:gap-3 p-3 md:p-3.5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow group active:bg-gray-50"
+            onClick={(e) => {
+              // 如果已滑动，点击删除按钮区域则处理删除
+              if (isSwiped) {
+                e.stopPropagation()
+                handleDelete(tx.id)
+              } else {
+                // 否则处理编辑
+                onEdit(tx)
+              }
+            }}
+          >
+            {/* 图标 */}
+            <div
+              className="w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center text-base md:text-lg shrink-0"
+              style={{ backgroundColor: (catInfo?.color || "#94a3b8") + "20" }}
+            >
+              {catInfo?.icon || "💼"}
+            </div>
+
+            {/* 主要信息 */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
+                <span className="text-sm font-medium text-gray-800 truncate">
+                  {tx.description}
+                </span>
+                <Badge
+                  variant={tx.type === "income" ? "success" : "destructive"}
+                  className="text-[11px] md:text-xs shrink-0"
+                >
+                  {tx.type === "income" ? "收入" : "支出"}
+                </Badge>
+              </div>
+              <div className="flex items-center gap-1.5 md:gap-2 mt-0.5">
+                <span className="text-[11px] md:text-xs text-gray-400">{tx.date}</span>
+                <span className="text-[11px] md:text-xs text-gray-400">·</span>
+                <span className="text-[11px] md:text-xs text-gray-500 truncate">
+                  {tx.category}
+                  {tx.subCategory ? ` · ${tx.subCategory}` : ""}
+                </span>
+                {tx.notes && (
+                  <>
+                    <span className="text-[11px] md:text-xs text-gray-400">·</span>
+                    <span className="text-[11px] md:text-xs text-gray-400 truncate max-w-24 md:max-w-32">{tx.notes}</span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* 金额 */}
+            <div
+              className={`text-sm md:text-base font-bold shrink-0 ${
+                tx.type === "income" ? "text-green-600" : "text-red-500"
+              }`}
+            >
+              {tx.type === "income" ? "+" : "-"}¥{formatAmount(tx.amount)}
+            </div>
+
+            {/* 操作按钮（桌面端显示） */}
+            <div className="hidden md:flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button
+                onClick={(e) => { e.stopPropagation(); onEdit(tx) }}
+                className="p-1.5 rounded-md hover:bg-blue-50 text-blue-400 hover:text-blue-600 transition-colors cursor-pointer"
+                title="编辑"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); handleDelete(tx.id) }}
+                className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+                  confirmDeleteId === tx.id
+                    ? "bg-red-100 text-red-600"
+                    : "hover:bg-red-50 text-red-300 hover:text-red-500"
+                }`}
+                title={confirmDeleteId === tx.id ? "再次点击确认删除" : "删除"}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-3 md:space-y-3">
+    <div className="space-y-3 md:space-y-3" onClick={handleClickOutside}>
       {/* 搜索栏 */}
       <div className="flex gap-2">
         <div className="relative flex-1">
@@ -174,79 +349,11 @@ export function TransactionList({ transactions, onEdit, onDelete }: TransactionL
           {paginated.map((tx) => {
             const catInfo = getCategoryInfo(tx.category)
             return (
-              <div
+              <SwipeableTransaction
                 key={tx.id}
-                className="flex items-center gap-2 md:gap-3 p-3 md:p-3.5 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow group active:bg-gray-50"
-                onClick={() => onEdit(tx)}
-              >
-                {/* 图标 */}
-                <div
-                  className="w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center text-base md:text-lg shrink-0"
-                  style={{ backgroundColor: (catInfo?.color || "#94a3b8") + "20" }}
-                >
-                  {catInfo?.icon || "💼"}
-                </div>
-
-                {/* 主要信息 */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
-                    <span className="text-sm font-medium text-gray-800 truncate">
-                      {tx.description}
-                    </span>
-                    <Badge
-                      variant={tx.type === "income" ? "success" : "destructive"}
-                      className="text-[11px] md:text-xs shrink-0"
-                    >
-                      {tx.type === "income" ? "收入" : "支出"}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-1.5 md:gap-2 mt-0.5">
-                    <span className="text-[11px] md:text-xs text-gray-400">{tx.date}</span>
-                    <span className="text-[11px] md:text-xs text-gray-400">·</span>
-                    <span className="text-[11px] md:text-xs text-gray-500 truncate">
-                      {tx.category}
-                      {tx.subCategory ? ` · ${tx.subCategory}` : ""}
-                    </span>
-                    {tx.notes && (
-                      <>
-                        <span className="text-[11px] md:text-xs text-gray-400">·</span>
-                        <span className="text-[11px] md:text-xs text-gray-400 truncate max-w-24 md:max-w-32">{tx.notes}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* 金额 */}
-                <div
-                  className={`text-sm md:text-base font-bold shrink-0 ${
-                    tx.type === "income" ? "text-green-600" : "text-red-500"
-                  }`}
-                >
-                  {tx.type === "income" ? "+" : "-"}¥{formatAmount(tx.amount)}
-                </div>
-
-                {/* 操作按钮 */}
-                <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => onEdit(tx)}
-                    className="p-1.5 rounded-md hover:bg-blue-50 text-blue-400 hover:text-blue-600 transition-colors cursor-pointer"
-                    title="编辑"
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(tx.id)}
-                    className={`p-1.5 rounded-md transition-colors cursor-pointer ${
-                      confirmDeleteId === tx.id
-                        ? "bg-red-100 text-red-600"
-                        : "hover:bg-red-50 text-red-300 hover:text-red-500"
-                    }`}
-                    title={confirmDeleteId === tx.id ? "再次点击确认删除" : "删除"}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
+                tx={tx}
+                catInfo={catInfo}
+              />
             )
           })}
         </div>
