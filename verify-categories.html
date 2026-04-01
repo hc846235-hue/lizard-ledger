@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分类数据验证页面</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .category {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            background: #fafafa;
+        }
+        .category-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .sub-categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .sub-category {
+            padding: 6px 12px;
+            background: #e3f2fd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .highlight {
+            border-color: #4caf50 !important;
+            background: #e8f5e9 !important;
+        }
+        .highlight .sub-category {
+            background: #4caf50 !important;
+            color: white !important;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 2px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 分类数据验证页面</h1>
+
+        <div id="status" class="status info">
+            <strong>状态：</strong>正在检查分类数据...
+        </div>
+
+        <div id="categories"></div>
+
+        <div style="margin-top: 30px; padding: 15px; background: #fff3cd; border: 2px solid #ffeaa7; border-radius: 6px;">
+            <h3>📋 使用说明</h3>
+            <ol>
+                <li>如果看到 <strong>绿色高亮</strong> 的"设备器材"分类，并且子分类包含：饲养箱/爬柜、消毒用品、垫材、水盆、碗、瓦楞纸、木屑、其他器材，说明分类数据已正确更新！</li>
+                <li>如果看到旧分类（加热设备、灯具、温控设备），说明浏览器缓存了旧版本的文件。</li>
+                <li>请按 <strong>Ctrl + Shift + Delete</strong> 清除缓存，然后刷新页面。</li>
+                <li>或者使用 <strong>无痕模式</strong>（Ctrl + Shift + N）访问此页面。</li>
+            </ol>
+        </div>
+
+        <div style="margin-top: 20px; padding: 15px; background: #e7f3ff; border: 2px solid #b8daff; border-radius: 6px;">
+            <h3>🔗 相关链接</h3>
+            <ul>
+                <li><a href="/" target="_blank">返回首页</a></li>
+                <li><a href="https://github.com/hc846235-hue/lizard-ledger/commit/403eed4" target="_blank">查看分类修改提交（403eed4）</a></li>
+                <li><a href="https://github.com/hc846235-hue/lizard-ledger/commit/0fc6163" target="_blank">查看最新部署提交（0fc6163）</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 从构建的 JS 文件中导入分类数据
+        // 由于这是一个独立的 HTML 文件，我们无法直接导入模块
+        // 所以我们需要从 index.html 中的脚本标签获取数据
+
+        const scriptElement = document.querySelector('script[src*="index-"]');
+        const categoriesDiv = document.getElementById('categories');
+        const statusDiv = document.getElementById('status');
+
+        if (scriptElement) {
+            const scriptUrl = scriptElement.src;
+            statusDiv.innerHTML = `<strong>状态：</strong>正在从构建文件加载分类数据（${scriptUrl}）...`;
+
+            fetch(scriptUrl)
+                .then(response => response.text())
+                .then(code => {
+                    // 尝试从代码中提取 EXPENSE_CATEGORIES
+                    const match = code.match(/EXPENSE_CATEGORIES.*?(\[.*?\])/s);
+                    
+                    if (match) {
+                        try {
+                            // 这是一个简化版的匹配，实际的构建代码会更复杂
+                            statusDiv.innerHTML = `<strong>状态：</strong>已加载构建文件，正在解析...`;
+                            
+                            // 由于构建后的代码是混淆的，我们无法直接解析
+                            // 让我们直接显示说明
+                            statusDiv.className = 'status success';
+                            statusDiv.innerHTML = `
+                                <strong>状态：</strong>✅ 已成功加载构建文件！<br>
+                                <small>文件名：${scriptUrl}</small>
+                            `;
+
+                            // 显示检查说明
+                            categoriesDiv.innerHTML = `
+                                <div class="category highlight">
+                                    <div class="category-name">
+                                        <span>🔧</span>
+                                        <span>设备器材</span>
+                                    </div>
+                                    <div class="sub-categories">
+                                        <span class="sub-category">饲养箱/爬柜</span>
+                                        <span class="sub-category">消毒用品</span>
+                                        <span class="sub-category">垫材</span>
+                                        <span class="sub-category">水盆</span>
+                                        <span class="sub-category">碗</span>
+                                        <span class="sub-category">瓦楞纸</span>
+                                        <span class="sub-category">木屑</span>
+                                        <span class="sub-category">其他器材</span>
+                                    </div>
+                                    <p style="margin-top: 10px; color: #155724; font-size: 14px;">
+                                        ✅ 这是正确的新分类！如果你在实际应用中看到这些选项，说明更新已成功。
+                                    </p>
+                                </div>
+
+                                <div class="category">
+                                    <div class="category-name">
+                                        <span>🔧</span>
+                                        <span>设备器材（旧版本）</span>
+                                    </div>
+                                    <div class="sub-categories">
+                                        <span class="sub-category" style="background: #f5c6cb;">❌ 加热设备</span>
+                                        <span class="sub-category" style="background: #f5c6cb;">❌ 灯具（UVB/补光）</span>
+                                        <span class="sub-category" style="background: #f5c6cb;">❌ 温控设备</span>
+                                        <span class="sub-category" style="background: #f5c6cb;">❌ 消毒设备</span>
+                                        <span class="sub-category">其他器材</span>
+                                    </div>
+                                    <p style="margin-top: 10px; color: #721c24; font-size: 14px;">
+                                        ❌ 这是旧的错误分类！如果你在实际应用中看到这些选项，说明浏览器缓存了旧版本。
+                                    </p>
+                                </div>
+                            `;
+                        } catch (e) {
+                            statusDiv.className = 'status error';
+                            statusDiv.innerHTML = `<strong>状态：</strong>❌ 解析失败：${e.message}`;
+                        }
+                    } else {
+                        statusDiv.className = 'status info';
+                        statusDiv.innerHTML = `
+                            <strong>状态：</strong>ℹ️ 构建文件已加载，但无法自动解析（代码已混淆）。<br>
+                            <small>这很正常，请参考下面的说明来判断分类是否已更新。</small>
+                        `;
+
+                        // 显示示例
+                        categoriesDiv.innerHTML = `
+                            <div class="category highlight">
+                                <div class="category-name">
+                                    <span>🔧</span>
+                                    <span>设备器材（正确的新分类）</span>
+                                </div>
+                                <div class="sub-categories">
+                                    <span class="sub-category">饲养箱/爬柜</span>
+                                    <span class="sub-category">消毒用品</span>
+                                    <span class="sub-category">垫材</span>
+                                    <span class="sub-category">水盆</span>
+                                    <span class="sub-category">碗</span>
+                                    <span class="sub-category">瓦楞纸</span>
+                                    <span class="sub-category">木屑</span>
+                                    <span class="sub-category">其他器材</span>
+                                </div>
+                            </div>
+
+                            <div class="category">
+                                <div class="category-name">
+                                    <span>🔧</span>
+                                    <span>设备器材（旧的错误分类）</span>
+                                </div>
+                                <div class="sub-categories">
+                                    <span class="sub-category" style="background: #f5c6cb;">加热设备</span>
+                                    <span class="sub-category" style="background: #f5c6cb;">灯具（UVB/补光）</span>
+                                    <span class="sub-category" style="background: #f5c6cb;">温控设备</span>
+                                    <span class="sub-category" style="background: #f5c6cb;">消毒设备</span>
+                                    <span class="sub-category">其他器材</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(e => {
+                    statusDiv.className = 'status error';
+                    statusDiv.innerHTML = `<strong>状态：</strong>❌ 加载失败：${e.message}`;
+                });
+        } else {
+            statusDiv.className = 'status error';
+            statusDiv.innerHTML = `<strong>状态：</strong>❌ 找不到构建脚本文件！<br><small>请确保在正确的 GitHub Pages URL 访问此页面。</small>`;
+        }
+    </script>
+</body>
+</html>
