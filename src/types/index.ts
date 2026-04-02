@@ -55,7 +55,7 @@ export const EXPENSE_CATEGORIES: Category[] = [
   },
   {
     name: "设备器材",
-    subCategories: ["饲养箱/爬柜", "消毒用品", "垫材", "水盆", "碗", "瓦楞纸", "木屑", "其他器材"],
+    subCategories: ["爬柜", "消毒用品", "垫材", "水盆", "碗", "瓦楞纸", "木屑", "其他器材"],
     color: "#eab308",
     icon: "🔧",
   },
