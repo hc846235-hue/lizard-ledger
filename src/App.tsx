@@ -182,7 +182,7 @@ export default function App() {
           <div className="flex md:hidden items-center">
             <button
               onClick={() => setDataSource(dataSource === "cloud" ? "local" : "cloud")}
-              className="w-9 h-9 md:w-9 md:h-9 flex items-center justify-center rounded-lg transition-all cursor-pointer min-w-[36px] min-h-[36px] ${
+              className={`w-9 h-9 md:w-9 md:h-9 flex items-center justify-center rounded-lg transition-all cursor-pointer min-w-[36px] min-h-[36px] ${
                 dataSource === "cloud"
                   ? "bg-blue-500 text-white shadow-md"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -191,6 +191,7 @@ export default function App() {
             >
               <Cloud className="h-4 w-4 md:h-4 md:w-4" />
             </button>
+          </div>
           </div>
         </div>
       </header>
@@ -219,79 +220,6 @@ export default function App() {
           </div>
         </div>
       </div>
-
-      {/* 桌面端新增按钮 */}
-      <div className="hidden md:flex items-center gap-2">
-            {/* 数据源切换 */}
-            <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
-              <button
-                onClick={() => setDataSource("cloud")}
-                className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-all cursor-pointer ${
-                  dataSource === "cloud"
-                    ? "bg-white text-blue-600 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-                title="使用云端数据库（数据永久保存）"
-              >
-                <Cloud className="h-3.5 w-3.5" />
-                云端
-              </button>
-              <button
-                onClick={() => setDataSource("local")}
-                className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-all cursor-pointer ${
-                  dataSource === "local"
-                    ? "bg-white text-gray-800 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-                title="使用本地存储（浏览器缓存）"
-              >
-                <Database className="h-3.5 w-3.5" />
-                本地
-              </button>
-            </div>
-
-            <Button
-              size="sm"
-              onClick={() => setFormOpen(true)}
-              className="gap-1.5 text-xs"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              新增账目
-            </Button>
-
-            {/* 更多操作下拉 */}
-            <div className="relative group">
-              <button
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
-                title="更多操作"
-              >
-                <span className="flex flex-col gap-[3px] items-center">
-                  <span className="w-1 h-1 rounded-full bg-current" />
-                  <span className="w-1 h-1 rounded-full bg-current" />
-                  <span className="w-1 h-1 rounded-full bg-current" />
-                </span>
-              </button>
-              <div className="absolute right-0 top-full mt-1 w-36 bg-white rounded-xl shadow-lg border border-gray-100 py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
-                <button
-                  onClick={() => setChangePwdOpen(true)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
-                >
-                  <KeyRound className="h-3.5 w-3.5 text-amber-500" />
-                  修改密码
-                </button>
-                <div className="border-t border-gray-100 my-1" />
-                <button
-                  onClick={() => setShowLogoutConfirm(true)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
-                >
-                  <LogOut className="h-3.5 w-3.5" />
-                  退出登录
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
 
       {/* 主内容区 */}
       <main className="pt-14 max-w-5xl mx-auto px-3 md:px-4 py-4 md:py-6">

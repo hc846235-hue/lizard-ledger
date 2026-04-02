@@ -138,12 +138,28 @@ function parseAmount(text: string): number {
   const wanMatch = text.match(/(\d+(?:\.\d+)?)\s*万/)
   if (wanMatch) return parseFloat(wanMatch[1]) * 10000
 
-  // 匹配带单位的金额：800元、800块、¥800、800rmb
-  const amountMatch = text.match(/[¥￥]?\s*(\d+(?:[.,]\d+)?)\s*(?:元|块|rmb|RMB|cny|CNY)?/)
-  if (amountMatch) {
-    const raw = amountMatch[1].replace(",", "")
-    const num = parseFloat(raw)
-    if (!isNaN(num) && num > 0) return num
+  // 匹配带单位的金额：800元、800块、¥800、800rmb、收了800、花了800
+  // 优先匹配更大的数字(避免误识别数量)
+  const amounts: number[] = []
+  let match
+
+  // 匹配：收了/卖了/花了/收入/支出 后面跟着数字
+  const actionMatch = text.match(/(?:收了|卖了|花了|收入|支出|到账|付款|付款给|支付|花费)(?:\s*\d+[条个对只头])?\s*(\d+(?:[.,]\d+)?)/gi)
+  if (actionMatch) {
+    const numMatch = actionMatch[0].match(/(\d+(?:[.,]\d+)?)/)
+    if (numMatch) amounts.push(parseFloat(numMatch[1].replace(",", "")))
+  }
+
+  // 匹配带单位的金额：800元、800块、¥800
+  const unitMatch = text.match(/[¥￥]?\s*(\d+(?:[.,]\d+)?)\s*(?:元|块|rmb|RMB|cny|CNY)?/)
+  if (unitMatch) {
+    const num = parseFloat(unitMatch[1].replace(",", ""))
+    if (!isNaN(num) && num > 0) amounts.push(num)
+  }
+
+  // 返回最大的金额(避免误识别数量)
+  if (amounts.length > 0) {
+    return Math.max(...amounts)
   }
 
   return 0
@@ -228,18 +244,20 @@ export function parseTransactionText(text: string): ParsedTransaction | null {
     confidence += 0.25
   }
 
-  // 5. 提取描述（去掉金额、日期、类型关键词后的核心内容）
-  let description = text
-    .replace(/[¥￥]\s*\d+(?:[.,]\d+)?|\d+(?:[.,]\d+)?\s*(?:万|元|块|rmb|RMB)/gi, "")
-    .replace(/今天|昨天|前天|上周|今日|昨日/g, "")
-    .replace(/\d{1,2}月\d{1,2}(?:日|号)?/g, "")
-    .replace(/\d{4}[/-]\d{1,2}[/-]\d{1,2}/g, "")
-    .replace(/[，。！？,!?]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
+  // 5. 提取描述（保留完整的原文作为描述，方便用户确认）
+  let description = text.trim()
 
-  // 如果描述太短，用原文
-  if (description.length < 2) description = text.trim()
+  // 如果描述太长(超过50字)，才尝试简化
+  if (description.length > 50) {
+    description = text
+      .replace(/[¥￥]\s*\d+(?:[.,]\d+)?|\d+(?:[.,]\d+)?\s*(?:万|元|块|rmb|RMB)/gi, "")
+      .replace(/今天|昨天|前天|上周|今日|昨日/g, "")
+      .replace(/\d{1,2}月\d{1,2}(?:日|号)?/g, "")
+      .replace(/\d{4}[/-]\d{1,2}[/-]\d{1,2}/g, "")
+      .replace(/[，。！？,!?]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+  }
 
   // 置信度上限
   confidence = Math.min(confidence, 0.95)
