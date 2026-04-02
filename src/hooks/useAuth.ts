@@ -12,7 +12,14 @@ export function useAuth() {
 
   // 检查是否已登录（session存在且有效）
   const isLoggedIn = (): boolean => {
-    return sessionStorage.getItem(SESSION_KEY) === "1"
+    const sessionValid = sessionStorage.getItem(SESSION_KEY) === "1"
+    const cloudEnabled = localStorage.getItem(SESSION_KEY + "_cloud") !== "0"
+    return sessionValid
+  }
+
+  // 检查是否启用了云端存储
+  const isCloudEnabled = (): boolean => {
+    return localStorage.getItem(SESSION_KEY + "_cloud") !== "0"
   }
 
   // 验证密码并登录
@@ -33,7 +40,10 @@ export function useAuth() {
       console.log('用户 ID:', currentUser?.uid)
       console.log('用户 openid:', currentUser?.openid)
 
+      // 保存登录状态
       sessionStorage.setItem(SESSION_KEY, "1")
+      localStorage.setItem(SESSION_KEY + "_cloud", "1")
+
       return { success: true, user: currentUser }
     } catch (error: any) {
       console.error('CloudBase 登录失败:', error)
@@ -42,9 +52,17 @@ export function useAuth() {
         code: error?.code,
         stack: error?.stack
       })
-      // 即使 CloudBase 登录失败，也允许使用本地存储模式
+
+      // CloudBase 登录失败，仍然允许使用本地存储模式
+      console.warn('CloudBase 登录失败，将使用本地存储模式')
       sessionStorage.setItem(SESSION_KEY, "1")
-      return { success: true, user: null, error: error?.message || '登录失败，但可以使用本地存储模式' }
+      localStorage.setItem(SESSION_KEY + "_cloud", "0")
+
+      return {
+        success: true,
+        user: null,
+        error: '云端登录失败，已切换到本地存储模式'
+      }
     }
   }
 
@@ -79,5 +97,5 @@ export function useAuth() {
     return true
   }
 
-  return { isLoggedIn, login, logout, changePassword, getCurrentUser }
+  return { isLoggedIn, login, logout, changePassword, getCurrentUser, isCloudEnabled }
 }

@@ -46,7 +46,7 @@ export default function App() {
   const cloudError = isCloud ? cloudData.error : null
   const isSaving = isCloud ? cloudData.isSaving : false
 
-  const { isLoggedIn, login, logout, changePassword } = useAuth()
+  const { isLoggedIn, login, logout, changePassword, isCloudEnabled } = useAuth()
   const [activeTab, setActiveTab] = useState<Tab>("overview")
   const [reportSubTab, setReportSubTab] = useState<ReportSubTab>("year")
   const [formOpen, setFormOpen] = useState(false)
@@ -55,6 +55,7 @@ export default function App() {
   const [changePwdOpen, setChangePwdOpen] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [cloudAvailable, setCloudAvailable] = useState<boolean>(true)
 
   console.log('State initialized:', {
     activeTab,
@@ -73,10 +74,28 @@ export default function App() {
     if (result.success) {
       setLoggedIn(true)
 
+      // 检查云端是否可用
+      const cloudReady = isCloudEnabled()
+      setCloudAvailable(cloudReady)
+
+      // 如果云端不可用，自动切换到本地存储
+      if (!cloudReady && dataSource === 'cloud') {
+        console.warn('云端不可用，自动切换到本地存储')
+        setDataSource('local')
+      }
+
       // 如果是云端数据源，登录成功后重新加载数据
       if (dataSource === 'cloud') {
         console.log('登录成功，重新加载云端数据...')
-        await refresh()
+        try {
+          await refresh()
+        } catch (error) {
+          console.error('加载云端数据失败:', error)
+          // 如果加载失败，切换到本地存储
+          setDataSource('local')
+          setSuccessMessage('云端数据加载失败，已切换到本地存储')
+          setTimeout(() => setSuccessMessage(null), 3000)
+        }
       }
 
       if (result.error) {
@@ -104,10 +123,10 @@ export default function App() {
     try {
       if (editData) {
         await updateTransaction(editData.id, data)
-        setSuccessMessage('账单更新成功')
+        setSuccessMessage(isCloud ? '账单已保存到云端' : '账单已保存到本地')
       } else {
         await addTransaction(data)
-        setSuccessMessage('账单添加成功')
+        setSuccessMessage(isCloud ? '账单已添加到云端' : '账单已添加到本地')
       }
       setEditData(null)
       setFormOpen(false)
@@ -117,7 +136,13 @@ export default function App() {
     } catch (error: any) {
       console.error('保存失败:', error)
       setSuccessMessage(null)
-      alert(`保存失败: ${error?.message || '请稍后重试'}`)
+
+      // 如果云端保存失败，提示用户可以切换到本地
+      if (isCloud && error?.message) {
+        alert(`云端保存失败: ${error.message}\n\n建议：\n1. 检查网络连接\n2. 切换到本地存储\n3. 稍后重试`)
+      } else {
+        alert(`保存失败: ${error?.message || '请稍后重试'}`)
+      }
     }
   }
 
@@ -129,12 +154,16 @@ export default function App() {
   const handleDelete = async (id: string) => {
     try {
       await deleteTransaction(id)
-      setSuccessMessage('账单删除成功')
+      setSuccessMessage(isCloud ? '账单已从云端删除' : '账单已从本地删除')
       // 3秒后隐藏成功消息
       setTimeout(() => setSuccessMessage(null), 3000)
     } catch (error: any) {
       console.error('删除失败:', error)
-      alert(`删除失败: ${error?.message || '请稍后重试'}`)
+      if (isCloud && error?.message) {
+        alert(`云端删除失败: ${error?.message || '请稍后重试'}`)
+      } else {
+        alert(`删除失败: ${error?.message || '请稍后重试'}`)
+      }
     }
   }
 
@@ -161,8 +190,15 @@ export default function App() {
 
       {/* 错误提示 */}
       {cloudError && (
-        <div className="fixed top-16 left-1/2 transform -translate-x-1/2 z-50 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg">
+        <div className="fixed top-16 left-1/2 transform -translate-x-1/2 z-50 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg cursor-pointer" onClick={() => {}}>
           ✗ {cloudError}
+        </div>
+      )}
+
+      {/* 云端状态指示器 */}
+      {!cloudAvailable && (
+        <div className="fixed top-28 left-1/2 transform -translate-x-1/2 z-40 bg-yellow-500 text-white px-3 py-1.5 rounded-lg shadow-lg text-xs">
+          ⚠️ 云端不可用，已使用本地存储
         </div>
       )}
       {/* 顶部导航 */}
@@ -220,7 +256,15 @@ export default function App() {
             {/* 数据源切换 */}
             <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
               <button
-                onClick={() => setDataSource("cloud")}
+                onClick={() => {
+                  if (!cloudAvailable) {
+                    alert("云端服务暂时不可用，请稍后重试")
+                    return
+                  }
+                  setDataSource("cloud")
+                  setSuccessMessage("已切换到云端存储")
+                  setTimeout(() => setSuccessMessage(null), 3000)
+                }}
                 className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-all cursor-pointer ${
                   dataSource === "cloud"
                     ? "bg-white text-blue-600 shadow-sm"
@@ -232,7 +276,11 @@ export default function App() {
                 云端
               </button>
               <button
-                onClick={() => setDataSource("local")}
+                onClick={() => {
+                  setDataSource("local")
+                  setSuccessMessage("已切换到本地存储")
+                  setTimeout(() => setSuccessMessage(null), 3000)
+                }}
                 className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-all cursor-pointer ${
                   dataSource === "local"
                     ? "bg-white text-gray-800 shadow-sm"
@@ -249,7 +297,16 @@ export default function App() {
           {/* 移动端数据源切换按钮 */}
           <div className="flex md:hidden items-center">
             <button
-              onClick={() => setDataSource(dataSource === "cloud" ? "local" : "cloud")}
+              onClick={() => {
+                const newSource = dataSource === "cloud" ? "local" : "cloud"
+                if (newSource === "cloud" && !cloudAvailable) {
+                  alert("云端服务暂时不可用，请稍后重试")
+                  return
+                }
+                setDataSource(newSource)
+                setSuccessMessage(newSource === "cloud" ? "已切换到云端存储" : "已切换到本地存储")
+                setTimeout(() => setSuccessMessage(null), 3000)
+              }}
               className={`w-9 h-9 md:w-9 md:h-9 flex items-center justify-center rounded-lg transition-all cursor-pointer min-w-[36px] min-h-[36px] ${
                 dataSource === "cloud"
                   ? "bg-blue-500 text-white shadow-md"

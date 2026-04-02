@@ -3,6 +3,7 @@ import type { Transaction } from "../types"
 import { format } from "date-fns"
 
 const STORAGE_KEY = "lizard-ledger-transactions"
+const BACKUP_KEY = "lizard-ledger-backup"
 
 const SAMPLE_TRANSACTIONS: Transaction[] = [
   {
@@ -105,7 +106,17 @@ export function useTransactions() {
   })
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions))
+    try {
+      // 主存储
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions))
+      // 备份存储（带时间戳）
+      localStorage.setItem(BACKUP_KEY, JSON.stringify({
+        timestamp: new Date().toISOString(),
+        data: transactions
+      }))
+    } catch (error) {
+      console.error("保存本地账单失败:", error)
+    }
   }, [transactions])
 
   const addTransaction = useCallback((tx: Omit<Transaction, "id" | "createdAt">) => {

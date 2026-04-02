@@ -45,7 +45,7 @@ export function useCloudTransactions() {
     loadBills()
   }, [])
 
-  const loadBills = async () => {
+  const loadBills = async (retryCount = 0) => {
     try {
       setLoading(true)
       setError(null)
@@ -58,7 +58,15 @@ export function useCloudTransactions() {
       setTransactions(txs)
     } catch (error: any) {
       console.error('加载账单失败:', error)
-      setError(error?.message || '加载账单失败')
+
+      // 网络错误时重试
+      if (retryCount < 2 && (error?.code === 'NETWORK_ERROR' || error?.code === 'TIMEOUT')) {
+        console.log(`网络错误，第 ${retryCount + 1} 次重试...`)
+        setTimeout(() => loadBills(retryCount + 1), 1000 * (retryCount + 1))
+        return
+      }
+
+      setError(error?.message || '加载账单失败，请检查网络连接')
     } finally {
       setLoading(false)
     }
@@ -81,8 +89,14 @@ export function useCloudTransactions() {
       return result
     } catch (error: any) {
       console.error('添加账单失败:', error)
-      setError(error?.message || '添加账单失败')
-      throw error
+
+      // 网络错误时提供更友好的提示
+      const errorMsg = error?.code === 'NETWORK_ERROR' || error?.code === 'TIMEOUT'
+        ? '网络连接失败，请检查网络后重试'
+        : error?.message || '添加账单失败，请稍后重试'
+
+      setError(errorMsg)
+      throw new Error(errorMsg)
     } finally {
       setIsSaving(false)
     }
@@ -112,8 +126,13 @@ export function useCloudTransactions() {
       await loadBills()
     } catch (error: any) {
       console.error('更新账单失败:', error)
-      setError(error?.message || '更新账单失败')
-      throw error
+
+      const errorMsg = error?.code === 'NETWORK_ERROR' || error?.code === 'TIMEOUT'
+        ? '网络连接失败，请检查网络后重试'
+        : error?.message || '更新账单失败，请稍后重试'
+
+      setError(errorMsg)
+      throw new Error(errorMsg)
     } finally {
       setIsSaving(false)
     }
@@ -134,8 +153,13 @@ export function useCloudTransactions() {
       await loadBills()
     } catch (error: any) {
       console.error('删除账单失败:', error)
-      setError(error?.message || '删除账单失败')
-      throw error
+
+      const errorMsg = error?.code === 'NETWORK_ERROR' || error?.code === 'TIMEOUT'
+        ? '网络连接失败，请检查网络后重试'
+        : error?.message || '删除账单失败，请稍后重试'
+
+      setError(errorMsg)
+      throw new Error(errorMsg)
     } finally {
       setIsSaving(false)
     }
