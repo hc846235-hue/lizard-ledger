@@ -1,4 +1,4 @@
-import { auth } from '../services/cloudbase'
+import { auth, isCloudBaseInitialized } from '../services/cloudbase'
 
 const PASSWORD_KEY = "lizard_ledger_pwd"
 const SESSION_KEY = "lizard_ledger_session"
@@ -13,7 +13,6 @@ export function useAuth() {
   // 检查是否已登录（session存在且有效）
   const isLoggedIn = (): boolean => {
     const sessionValid = sessionStorage.getItem(SESSION_KEY) === "1"
-    const cloudEnabled = localStorage.getItem(SESSION_KEY + "_cloud") !== "0"
     return sessionValid
   }
 
@@ -26,6 +25,19 @@ export function useAuth() {
   const login = async (password: string): Promise<{ success: boolean; user: any; error?: string }> => {
     if (password !== getStoredPassword()) {
       return { success: false, user: null, error: '密码错误' }
+    }
+
+    // 检查 CloudBase 是否初始化成功
+    if (!isCloudBaseInitialized) {
+      console.warn('CloudBase 未初始化，将使用本地存储模式')
+      sessionStorage.setItem(SESSION_KEY, "1")
+      localStorage.setItem(SESSION_KEY + "_cloud", "0")
+
+      return {
+        success: true,
+        user: null,
+        error: '云端服务不可用，已切换到本地存储模式'
+      }
     }
 
     // 使用 CloudBase 匿名登录（无需注册，可直接登录）
@@ -61,7 +73,7 @@ export function useAuth() {
       return {
         success: true,
         user: null,
-        error: '云端登录失败，已切换到本地存储模式'
+        error: error?.message || '云端登录失败，已切换到本地存储模式'
       }
     }
   }
@@ -69,8 +81,10 @@ export function useAuth() {
   // 退出登录
   const logout = async () => {
     try {
-      await auth.signOut()
-      console.log('CloudBase 退出登录成功')
+      if (isCloudBaseInitialized) {
+        await auth.signOut()
+        console.log('CloudBase 退出登录成功')
+      }
     } catch (error) {
       console.error('CloudBase 退出登录失败:', error)
     } finally {
@@ -81,6 +95,9 @@ export function useAuth() {
   // 获取当前用户
   const getCurrentUser = (): any => {
     try {
+      if (!isCloudBaseInitialized) {
+        return null
+      }
       const user = auth.currentUser
       console.log('获取当前用户:', user)
       return user
@@ -97,5 +114,5 @@ export function useAuth() {
     return true
   }
 
-  return { isLoggedIn, login, logout, changePassword, getCurrentUser, isCloudEnabled }
+  return { isLoggedIn, login, logout, changePassword, getCurrentUser, isCloudEnabled, isCloudBaseInitialized }
 }

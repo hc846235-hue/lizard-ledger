@@ -46,7 +46,7 @@ export default function App() {
   const cloudError = isCloud ? cloudData.error : null
   const isSaving = isCloud ? cloudData.isSaving : false
 
-  const { isLoggedIn, login, logout, changePassword, isCloudEnabled } = useAuth()
+  const { isLoggedIn, login, logout, changePassword, isCloudEnabled, isCloudBaseInitialized } = useAuth()
   const [activeTab, setActiveTab] = useState<Tab>("overview")
   const [reportSubTab, setReportSubTab] = useState<ReportSubTab>("year")
   const [formOpen, setFormOpen] = useState(false)
@@ -55,12 +55,16 @@ export default function App() {
   const [changePwdOpen, setChangePwdOpen] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const [cloudAvailable, setCloudAvailable] = useState<boolean>(true)
+
+  // 根据初始化状态设置云端可用性
+  const [cloudAvailable, setCloudAvailable] = useState<boolean>(isCloudBaseInitialized)
 
   console.log('State initialized:', {
     activeTab,
     loggedIn,
     dataSource,
+    cloudAvailable,
+    isCloudBaseInitialized,
     transactionsCount: transactions.length
   })
 
@@ -75,8 +79,16 @@ export default function App() {
       setLoggedIn(true)
 
       // 检查云端是否可用
-      const cloudReady = isCloudEnabled()
+      const cloudReady = isCloudBaseInitialized && isCloudEnabled()
       setCloudAvailable(cloudReady)
+
+      console.log('登录结果:', {
+        success: result.success,
+        user: result.user,
+        error: result.error,
+        cloudReady,
+        isCloudBaseInitialized
+      })
 
       // 如果云端不可用，自动切换到本地存储
       if (!cloudReady && dataSource === 'cloud') {
