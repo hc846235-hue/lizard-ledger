@@ -4,26 +4,33 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
 interface LoginScreenProps {
-  onLogin: (password: string) => Promise<boolean>
+  onLogin: (password: string) => Promise<{ success: boolean; error?: string }>
 }
 
 export function LoginScreen({ onLogin }: LoginScreenProps) {
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
+  const [warning, setWarning] = useState("")
   const [shaking, setShaking] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setError("")
+    setWarning("")
     try {
-      const ok = await onLogin(password)
-      if (!ok) {
+      const result = await onLogin(password)
+      if (!result.success) {
         setError("密码错误，请重试")
         setShaking(true)
         setPassword("")
         setTimeout(() => setShaking(false), 500)
+      } else if (result.error) {
+        // 登录成功但云端不可用，显示警告
+        setWarning(result.error)
+        setTimeout(() => setWarning(""), 5000)
       }
     } catch (err) {
       setError("登录失败，请重试")
@@ -82,6 +89,13 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
               <p className="text-xs text-red-500 flex items-center gap-1">
                 <span className="inline-block w-1 h-1 rounded-full bg-red-500 shrink-0" />
                 {error}
+              </p>
+            )}
+
+            {warning && (
+              <p className="text-xs text-amber-600 flex items-start gap-1 leading-relaxed">
+                <span className="inline-block w-1 h-1 rounded-full bg-amber-500 shrink-0 mt-1" />
+                <span>{warning}</span>
               </p>
             )}
 

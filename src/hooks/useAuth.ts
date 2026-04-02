@@ -36,7 +36,7 @@ export function useAuth() {
       return {
         success: true,
         user: null,
-        error: '云端服务不可用，已切换到本地存储模式'
+        error: '云端服务不可用，已自动切换到本地存储模式\n\n数据将保存在浏览器本地缓存中，功能完全正常'
       }
     }
 
@@ -73,7 +73,7 @@ export function useAuth() {
       return {
         success: true,
         user: null,
-        error: error?.message || '云端登录失败，已切换到本地存储模式'
+        error: '云端登录失败，已自动切换到本地存储模式\n\n数据将保存在浏览器本地缓存中，功能完全正常'
       }
     }
   }

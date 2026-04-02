@@ -72,7 +72,7 @@ export default function App() {
   console.log('Stats calculated:', stats)
 
   // ── 登录处理 ──
-  const handleLogin = async (password: string): Promise<boolean> => {
+  const handleLogin = async (password: string): Promise<{ success: boolean; error?: string }> => {
     const result = await login(password)
 
     if (result.success) {
@@ -114,9 +114,14 @@ export default function App() {
         console.warn('登录警告:', result.error)
       }
 
-      return true
-    } else {
-      return false
+      return {
+        success: true,
+        error: result.error
+      }
+    }
+
+    return {
+      success: false
     }
   }
 
@@ -270,7 +275,7 @@ export default function App() {
               <button
                 onClick={() => {
                   if (!cloudAvailable) {
-                    alert("云端服务暂时不可用，请稍后重试")
+                    alert("云端服务不可用，可能原因：\n\n1. 网络连接问题\n2. CloudBase 服务暂时故障\n\n当前已使用本地存储模式，数据保存在浏览器中")
                     return
                   }
                   setDataSource("cloud")
@@ -308,11 +313,11 @@ export default function App() {
 
           {/* 移动端数据源切换按钮 */}
           <div className="flex md:hidden items-center">
-            <button
+              <button
               onClick={() => {
                 const newSource = dataSource === "cloud" ? "local" : "cloud"
                 if (newSource === "cloud" && !cloudAvailable) {
-                  alert("云端服务暂时不可用，请稍后重试")
+                  alert("云端服务不可用，可能原因：\n\n1. 网络连接问题\n2. CloudBase 服务暂时故障\n\n当前已使用本地存储模式，数据保存在浏览器中")
                   return
                 }
                 setDataSource(newSource)
