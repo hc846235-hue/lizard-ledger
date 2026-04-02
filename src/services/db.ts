@@ -32,8 +32,10 @@ export async function initDatabase() {
  */
 export async function getBills(): Promise<Bill[]> {
   try {
-    const { data } = await db.collection(COLLECTION_NAME).get();
-    return data as Bill[];
+    console.log('开始从云端获取账单...');
+    const result = await db.collection(COLLECTION_NAME).get();
+    console.log('获取账单成功，结果:', result);
+    return result.data as Bill[];
   } catch (error) {
     console.error('获取账单失败:', error);
     return [];
@@ -47,11 +49,19 @@ export async function addBill(bill: Omit<Bill, '_id' | 'createdAt' | 'updatedAt'
   try {
     const newBill = {
       ...bill,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
-    const { id } = await db.collection(COLLECTION_NAME).add(newBill);
-    return { ...newBill, _id: id };
+    console.log('准备添加账单到数据库:', newBill);
+
+    const result = await db.collection(COLLECTION_NAME).add(newBill);
+    console.log('数据库添加成功，返回结果:', result);
+
+    // CloudBase add 方法返回 { id, requestId }
+    const insertedId = (result as any).id || result?._id;
+    console.log('文档ID:', insertedId);
+
+    return { ...newBill, _id: insertedId };
   } catch (error) {
     console.error('添加账单失败:', error);
     throw error;
@@ -65,9 +75,11 @@ export async function updateBill(id: string, bill: Partial<Bill>): Promise<Bill>
   try {
     const updatedBill = {
       ...bill,
-      updatedAt: new Date(),
+      updatedAt: new Date().toISOString(),
     };
+    console.log('准备更新账单，ID:', id, '数据:', updatedBill);
     await db.collection(COLLECTION_NAME).doc(id).update(updatedBill);
+    console.log('账单更新成功');
     return { ...updatedBill, _id: id };
   } catch (error) {
     console.error('更新账单失败:', error);
@@ -80,7 +92,9 @@ export async function updateBill(id: string, bill: Partial<Bill>): Promise<Bill>
  */
 export async function deleteBill(id: string): Promise<void> {
   try {
+    console.log('准备删除账单，ID:', id);
     await db.collection(COLLECTION_NAME).doc(id).remove();
+    console.log('账单删除成功');
   } catch (error) {
     console.error('删除账单失败:', error);
     throw error;

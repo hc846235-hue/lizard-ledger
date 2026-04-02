@@ -1,3 +1,5 @@
+import { auth } from '../services/cloudbase'
+
 const PASSWORD_KEY = "lizard_ledger_pwd"
 const SESSION_KEY = "lizard_ledger_session"
 const DEFAULT_PASSWORD = "lizard2024"
@@ -14,17 +16,60 @@ export function useAuth() {
   }
 
   // 验证密码并登录
-  const login = (password: string): boolean => {
-    if (password === getStoredPassword()) {
-      sessionStorage.setItem(SESSION_KEY, "1")
-      return true
+  const login = async (password: string): Promise<{ success: boolean; user: any; error?: string }> => {
+    if (password !== getStoredPassword()) {
+      return { success: false, user: null, error: '密码错误' }
     }
-    return false
+
+    // 使用 CloudBase 匿名登录（无需注册，可直接登录）
+    try {
+      console.log('开始 CloudBase 匿名登录...')
+      const loginResult = await auth.signInAnonymously()
+      console.log('CloudBase 匿名登录成功:', loginResult)
+
+      // 获取当前用户信息
+      const currentUser = auth.currentUser
+      console.log('当前用户信息:', currentUser)
+      console.log('用户 ID:', currentUser?.uid)
+      console.log('用户 openid:', currentUser?.openid)
+
+      sessionStorage.setItem(SESSION_KEY, "1")
+      return { success: true, user: currentUser }
+    } catch (error: any) {
+      console.error('CloudBase 登录失败:', error)
+      console.error('错误详情:', {
+        message: error?.message,
+        code: error?.code,
+        stack: error?.stack
+      })
+      // 即使 CloudBase 登录失败，也允许使用本地存储模式
+      sessionStorage.setItem(SESSION_KEY, "1")
+      return { success: true, user: null, error: error?.message || '登录失败，但可以使用本地存储模式' }
+    }
   }
 
   // 退出登录
-  const logout = () => {
-    sessionStorage.removeItem(SESSION_KEY)
+  const logout = async () => {
+    try {
+      await auth.signOut()
+      console.log('CloudBase 退出登录成功')
+    } catch (error) {
+      console.error('CloudBase 退出登录失败:', error)
+    } finally {
+      sessionStorage.removeItem(SESSION_KEY)
+    }
+  }
+
+  // 获取当前用户
+  const getCurrentUser = (): any => {
+    try {
+      const user = auth.currentUser
+      console.log('获取当前用户:', user)
+      return user
+    } catch (error) {
+      console.error('获取当前用户失败:', error)
+      return null
+    }
   }
 
   // 修改密码（需要验证旧密码）
@@ -34,5 +79,5 @@ export function useAuth() {
     return true
   }
 
-  return { isLoggedIn, login, logout, changePassword }
+  return { isLoggedIn, login, logout, changePassword, getCurrentUser }
 }

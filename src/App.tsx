@@ -59,14 +59,14 @@ export default function App() {
   console.log('Stats calculated:', stats)
 
   // ── 登录处理 ──
-  const handleLogin = (password: string): boolean => {
-    const ok = login(password)
+  const handleLogin = async (password: string): Promise<boolean> => {
+    const ok = await login(password)
     if (ok) setLoggedIn(true)
     return ok
   }
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await logout()
     setLoggedIn(false)
     setShowLogoutConfirm(false)
   }

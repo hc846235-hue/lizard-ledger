@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
 interface LoginScreenProps {
-  onLogin: (password: string) => boolean
+  onLogin: (password: string) => Promise<boolean>
 }
 
 export function LoginScreen({ onLogin }: LoginScreenProps) {
@@ -12,15 +12,23 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [shaking, setShaking] = useState(false)
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const ok = onLogin(password)
-    if (!ok) {
-      setError("密码错误，请重试")
-      setShaking(true)
-      setPassword("")
-      setTimeout(() => setShaking(false), 500)
+    setLoading(true)
+    try {
+      const ok = await onLogin(password)
+      if (!ok) {
+        setError("密码错误，请重试")
+        setShaking(true)
+        setPassword("")
+        setTimeout(() => setShaking(false), 500)
+      }
+    } catch (err) {
+      setError("登录失败，请重试")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -77,14 +85,14 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
               </p>
             )}
 
-            <Button type="submit" className="w-full" disabled={!password}>
-              进入系统
+            <Button type="submit" className="w-full" disabled={!password || loading}>
+              {loading ? "登录中..." : "进入系统"}
             </Button>
           </form>
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-4">
-          数据仅存储在本设备，不上传云端
+          云端数据需要登录才能同步
         </p>
       </div>
 
