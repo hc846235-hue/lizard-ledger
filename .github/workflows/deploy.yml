@@ -24,8 +24,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
-          cache: 'npm'
+          node-version: '20'
 
       - name: Cache node modules
         uses: actions/cache@v4
@@ -33,15 +32,25 @@ jobs:
           path: |
             ~/.npm
             node_modules
-          key: ${{ runner.os }}-node-${{ github.sha }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
 
       - name: Install dependencies
-        run: npm ci --force
+        run: npm ci
+
+      - name: Debug info
+        run: |
+          echo "Node version:"
+          node --version
+          echo "NPM version:"
+          npm --version
+          echo "Disk space:"
+          df -h
 
       - name: Build
         run: npm run build
+        continue-on-error: false
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
