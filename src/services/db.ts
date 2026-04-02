@@ -131,7 +131,15 @@ export async function updateBill(id: string, bill: Partial<Bill>): Promise<Bill>
     await db.collection(COLLECTION_NAME).doc(id).update(updatedBill);
     console.log('账单更新成功');
 
-    return { ...updatedBill, _id: id };
+    return {
+      _id: id,
+      date: updatedBill.date || '',
+      category: updatedBill.category || '',
+      amount: updatedBill.amount || 0,
+      note: updatedBill.note,
+      createdAt: updatedBill.createdAt,
+      updatedAt: updatedBill.updatedAt,
+    } as Bill;
   } catch (error: any) {
     console.error('更新账单失败:');
     console.error('- 错误信息:', error?.message);

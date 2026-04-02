@@ -72,6 +72,7 @@ export interface UpdateBillInput {
  * 账单查询过滤器
  */
 export interface BillFilter {
+  userId?: string;
   type?: BillType;
   category?: BillCategory | IncomeCategory;
   startDate?: string;

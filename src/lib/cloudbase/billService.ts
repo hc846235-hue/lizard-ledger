@@ -10,6 +10,7 @@ import type {
   UpdateBillInput,
   BillFilter,
   BillStatistics,
+  BillType,
 } from '@/types/bill';
 
 const COLLECTION_NAME = 'bills';
@@ -293,7 +294,7 @@ export async function getRecentBills(
   limit: number = 10
 ): Promise<Bill[]> {
   return getBills(
-    { userId: userId as any },
+    { userId },
     {
       limit,
       orderBy: 'date',

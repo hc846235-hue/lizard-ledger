@@ -36,8 +36,15 @@ export default function App() {
   })
 
   // 根据数据源选择对应的 hook
-  const { transactions, addTransaction, updateTransaction, deleteTransaction, getStats, loading: cloudLoading, refresh: cloudRefresh, error: cloudError, isSaving } =
-    dataSource === "cloud" ? cloudHook : localHook
+  const isCloud = dataSource === "cloud"
+  const cloudData = cloudHook
+  const localData = localHook
+  const { transactions, addTransaction, updateTransaction, deleteTransaction, getStats } =
+    isCloud ? cloudData : localData
+  const loading = isCloud ? cloudData.loading : false
+  const refresh = isCloud ? cloudData.refresh : (() => {})
+  const cloudError = isCloud ? cloudData.error : null
+  const isSaving = isCloud ? cloudData.isSaving : false
 
   const { isLoggedIn, login, logout, changePassword } = useAuth()
   const [activeTab, setActiveTab] = useState<Tab>("overview")
@@ -69,7 +76,7 @@ export default function App() {
       // 如果是云端数据源，登录成功后重新加载数据
       if (dataSource === 'cloud') {
         console.log('登录成功，重新加载云端数据...')
-        await cloudRefresh()
+        await refresh()
       }
 
       if (result.error) {

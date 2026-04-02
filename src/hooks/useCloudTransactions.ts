@@ -5,7 +5,7 @@ import { getBills, addBill, updateBill as updateBillDB, deleteBill as deleteBill
 /**
  * 将 Transaction 转换为 Bill 格式
  */
-function transactionToBill(tx: Transaction) {
+function transactionToBill(tx: Transaction | Omit<Transaction, "id" | "createdAt">) {
   return {
     date: tx.date,
     category: `${tx.category} - ${tx.subCategory || ''}`,
