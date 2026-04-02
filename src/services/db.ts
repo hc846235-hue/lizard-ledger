@@ -42,18 +42,18 @@ export async function getBills(): Promise<Bill[]> {
   try {
     console.log('========== 开始从云端获取账单 ==========');
 
-    // 动态导入 auth 实例
-    const { auth } = await import('./cloudbase');
+    // 重新导入 auth 实例以确保获取最新的用户状态
+    const { auth: currentAuth } = await import('./cloudbase');
     console.log('当前用户信息:', {
-      uid: auth.currentUser?.uid,
-      openid: auth.currentUser?.openid,
-      isAnonymous: auth.currentUser?.isAnonymous,
-      loginType: auth.currentUser?.loginType
+      uid: currentAuth.currentUser?.uid,
+      openid: currentAuth.currentUser?.openid,
+      isAnonymous: currentAuth.currentUser?.isAnonymous,
+      loginType: currentAuth.currentUser?.loginType
     });
     console.log('认证状态:', {
-      hasUser: !!auth.currentUser,
-      isLogin: auth.currentUser?.isLogin,
-      isLoginExpired: auth.currentUser?.isLoginExpired
+      hasUser: !!currentAuth.currentUser,
+      isLogin: currentAuth.currentUser?.isLogin,
+      isLoginExpired: currentAuth.currentUser?.isLoginExpired
     });
 
     const result = await db.collection(COLLECTION_NAME).get();
@@ -98,13 +98,13 @@ export async function addBill(bill: Omit<Bill, '_id' | 'createdAt' | 'updatedAt'
       updatedAt: new Date().toISOString(),
     };
 
-    // 动态导入 auth 实例
-    const { auth } = await import('./cloudbase');
-
     console.log('准备添加账单到数据库:');
     console.log('- 集合名称:', COLLECTION_NAME);
     console.log('- 数据:', JSON.stringify(newBill, null, 2));
-    console.log('- 当前用户:', auth.currentUser?.uid);
+
+    // 重新导入 auth 实例以确保获取最新的用户状态
+    const { auth: currentAuth } = await import('./cloudbase');
+    console.log('- 当前用户:', currentAuth.currentUser?.uid);
 
     const result = await db.collection(COLLECTION_NAME).add(newBill);
     console.log('数据库添加成功，返回结果:', result);
