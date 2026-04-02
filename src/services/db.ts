@@ -6,8 +6,8 @@ export interface Bill {
   category: string;
   amount: number;
   note?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 const COLLECTION_NAME = 'bills';
@@ -19,11 +19,19 @@ export async function initDatabase() {
   try {
     // 检查集合是否存在
     const { data } = await db.collection(COLLECTION_NAME).get();
-    console.log('数据库集合已存在:', COLLECTION_NAME);
-  } catch (error) {
-    // 如果集合不存在，创建它
-    await db.createCollection(COLLECTION_NAME);
-    console.log('创建数据库集合:', COLLECTION_NAME);
+    console.log('数据库集合已存在:', COLLECTION_NAME, '文档数量:', data.length);
+  } catch (error: any) {
+    console.log('尝试创建数据库集合:', COLLECTION_NAME);
+    try {
+      await db.createCollection(COLLECTION_NAME);
+      console.log('创建数据库集合成功:', COLLECTION_NAME);
+    } catch (createError: any) {
+      console.error('创建数据库集合失败:', createError);
+      // 如果集合已存在错误，忽略
+      if (createError.code !== 'DATABASE_COLLECTION_EXIST') {
+        throw createError;
+      }
+    }
   }
 }
 
@@ -33,11 +41,30 @@ export async function initDatabase() {
 export async function getBills(): Promise<Bill[]> {
   try {
     console.log('开始从云端获取账单...');
+    console.log('当前用户信息:', db.auth.currentUser?.uid, db.auth.currentUser?.openid);
+
     const result = await db.collection(COLLECTION_NAME).get();
-    console.log('获取账单成功，结果:', result);
+    console.log('获取账单成功，文档数量:', result.data.length);
+
+    if (result.data.length > 0) {
+      console.log('第一条账单示例:', result.data[0]);
+    }
+
     return result.data as Bill[];
-  } catch (error) {
+  } catch (error: any) {
     console.error('获取账单失败:', error);
+    console.error('错误详情:', {
+      message: error?.message,
+      code: error?.code,
+      requestId: error?.requestId
+    });
+
+    // 如果是权限错误，提示用户
+    if (error?.code === 'PERMISSION_DENIED') {
+      console.warn('权限被拒绝，请检查 CloudBase 控制台的数据库权限设置');
+    }
+
+    // 返回空数组，让应用可以继续运行
     return [];
   }
 }
@@ -52,7 +79,11 @@ export async function addBill(bill: Omit<Bill, '_id' | 'createdAt' | 'updatedAt'
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    console.log('准备添加账单到数据库:', newBill);
+
+    console.log('准备添加账单到数据库:');
+    console.log('- 集合名称:', COLLECTION_NAME);
+    console.log('- 数据:', JSON.stringify(newBill, null, 2));
+    console.log('- 当前用户:', db.auth.currentUser?.uid);
 
     const result = await db.collection(COLLECTION_NAME).add(newBill);
     console.log('数据库添加成功，返回结果:', result);
@@ -61,10 +92,25 @@ export async function addBill(bill: Omit<Bill, '_id' | 'createdAt' | 'updatedAt'
     const insertedId = (result as any).id || result?._id;
     console.log('文档ID:', insertedId);
 
+    if (!insertedId) {
+      throw new Error('添加账单成功但未返回 ID');
+    }
+
     return { ...newBill, _id: insertedId };
-  } catch (error) {
-    console.error('添加账单失败:', error);
-    throw error;
+  } catch (error: any) {
+    console.error('添加账单失败:');
+    console.error('- 错误信息:', error?.message);
+    console.error('- 错误代码:', error?.code);
+    console.error('- 错误详情:', error);
+
+    // 提供更友好的错误信息
+    if (error?.code === 'PERMISSION_DENIED') {
+      throw new Error('没有写入权限，请检查数据库权限设置');
+    } else if (error?.code === 'UNAUTHENTICATED') {
+      throw new Error('用户未登录，请重新登录');
+    } else {
+      throw new Error(error?.message || '添加账单失败，请稍后重试');
+    }
   }
 }
 
@@ -77,13 +123,30 @@ export async function updateBill(id: string, bill: Partial<Bill>): Promise<Bill>
       ...bill,
       updatedAt: new Date().toISOString(),
     };
-    console.log('准备更新账单，ID:', id, '数据:', updatedBill);
+
+    console.log('准备更新账单:');
+    console.log('- ID:', id);
+    console.log('- 数据:', JSON.stringify(updatedBill, null, 2));
+
     await db.collection(COLLECTION_NAME).doc(id).update(updatedBill);
     console.log('账单更新成功');
+
     return { ...updatedBill, _id: id };
-  } catch (error) {
-    console.error('更新账单失败:', error);
-    throw error;
+  } catch (error: any) {
+    console.error('更新账单失败:');
+    console.error('- 错误信息:', error?.message);
+    console.error('- 错误代码:', error?.code);
+    console.error('- 文档ID:', id);
+
+    if (error?.code === 'PERMISSION_DENIED') {
+      throw new Error('没有修改权限，请检查数据库权限设置');
+    } else if (error?.code === 'DOCUMENT_NOT_EXIST') {
+      throw new Error('账单不存在，可能已被删除');
+    } else if (error?.code === 'UNAUTHENTICATED') {
+      throw new Error('用户未登录，请重新登录');
+    } else {
+      throw new Error(error?.message || '更新账单失败，请稍后重试');
+    }
   }
 }
 
@@ -93,11 +156,24 @@ export async function updateBill(id: string, bill: Partial<Bill>): Promise<Bill>
 export async function deleteBill(id: string): Promise<void> {
   try {
     console.log('准备删除账单，ID:', id);
+
     await db.collection(COLLECTION_NAME).doc(id).remove();
     console.log('账单删除成功');
-  } catch (error) {
-    console.error('删除账单失败:', error);
-    throw error;
+  } catch (error: any) {
+    console.error('删除账单失败:');
+    console.error('- 错误信息:', error?.message);
+    console.error('- 错误代码:', error?.code);
+    console.error('- 文档ID:', id);
+
+    if (error?.code === 'PERMISSION_DENIED') {
+      throw new Error('没有删除权限，请检查数据库权限设置');
+    } else if (error?.code === 'DOCUMENT_NOT_EXIST') {
+      throw new Error('账单不存在，可能已被删除');
+    } else if (error?.code === 'UNAUTHENTICATED') {
+      throw new Error('用户未登录，请重新登录');
+    } else {
+      throw new Error(error?.message || '删除账单失败，请稍后重试');
+    }
   }
 }
 
@@ -106,14 +182,18 @@ export async function deleteBill(id: string): Promise<void> {
  */
 export async function getBillsByDateRange(startDate: string, endDate: string): Promise<Bill[]> {
   try {
+    console.log(`获取 ${startDate} 到 ${endDate} 之间的账单`);
+
     const { data } = await db
       .collection(COLLECTION_NAME)
       .where({
         date: db.command.gte(startDate).and(db.command.lte(endDate)),
       })
       .get();
+
+    console.log(`找到 ${data.length} 条账单`);
     return data as Bill[];
-  } catch (error) {
+  } catch (error: any) {
     console.error('按日期获取账单失败:', error);
     return [];
   }
@@ -124,14 +204,18 @@ export async function getBillsByDateRange(startDate: string, endDate: string): P
  */
 export async function getBillsByCategory(category: string): Promise<Bill[]> {
   try {
+    console.log(`获取分类 "${category}" 的账单`);
+
     const { data } = await db
       .collection(COLLECTION_NAME)
       .where({
         category,
       })
       .get();
+
+    console.log(`找到 ${data.length} 条账单`);
     return data as Bill[];
-  } catch (error) {
+  } catch (error: any) {
     console.error('按分类获取账单失败:', error);
     return [];
   }

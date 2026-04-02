@@ -36,7 +36,7 @@ export default function App() {
   })
 
   // 根据数据源选择对应的 hook
-  const { transactions, addTransaction, updateTransaction, deleteTransaction, getStats, loading: cloudLoading, refresh: cloudRefresh } =
+  const { transactions, addTransaction, updateTransaction, deleteTransaction, getStats, loading: cloudLoading, refresh: cloudRefresh, error: cloudError, isSaving } =
     dataSource === "cloud" ? cloudHook : localHook
 
   const { isLoggedIn, login, logout, changePassword } = useAuth()
@@ -47,6 +47,7 @@ export default function App() {
   const [loggedIn, setLoggedIn] = useState<boolean>(isLoggedIn())
   const [changePwdOpen, setChangePwdOpen] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   console.log('State initialized:', {
     activeTab,
@@ -60,9 +61,25 @@ export default function App() {
 
   // ── 登录处理 ──
   const handleLogin = async (password: string): Promise<boolean> => {
-    const ok = await login(password)
-    if (ok) setLoggedIn(true)
-    return ok
+    const result = await login(password)
+
+    if (result.success) {
+      setLoggedIn(true)
+
+      // 如果是云端数据源，登录成功后重新加载数据
+      if (dataSource === 'cloud') {
+        console.log('登录成功，重新加载云端数据...')
+        await cloudRefresh()
+      }
+
+      if (result.error) {
+        console.warn('登录警告:', result.error)
+      }
+
+      return true
+    } else {
+      return false
+    }
   }
 
   const handleLogout = async () => {
@@ -76,18 +93,42 @@ export default function App() {
     setFormOpen(true)
   }
 
-  const handleFormSubmit = (data: Omit<Transaction, "id" | "createdAt">) => {
-    if (editData) {
-      updateTransaction(editData.id, data)
-    } else {
-      addTransaction(data)
+  const handleFormSubmit = async (data: Omit<Transaction, "id" | "createdAt">) => {
+    try {
+      if (editData) {
+        await updateTransaction(editData.id, data)
+        setSuccessMessage('账单更新成功')
+      } else {
+        await addTransaction(data)
+        setSuccessMessage('账单添加成功')
+      }
+      setEditData(null)
+      setFormOpen(false)
+
+      // 3秒后隐藏成功消息
+      setTimeout(() => setSuccessMessage(null), 3000)
+    } catch (error: any) {
+      console.error('保存失败:', error)
+      setSuccessMessage(null)
+      alert(`保存失败: ${error?.message || '请稍后重试'}`)
     }
-    setEditData(null)
   }
 
   const handleFormClose = () => {
     setFormOpen(false)
     setEditData(null)
+  }
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteTransaction(id)
+      setSuccessMessage('账单删除成功')
+      // 3秒后隐藏成功消息
+      setTimeout(() => setSuccessMessage(null), 3000)
+    } catch (error: any) {
+      console.error('删除失败:', error)
+      alert(`删除失败: ${error?.message || '请稍后重试'}`)
+    }
   }
 
   // ── 未登录：显示登录页 ──
@@ -97,6 +138,26 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-16 md:pb-6">
+      {/* 成功提示 */}
+      {successMessage && (
+        <div className="fixed top-16 left-1/2 transform -translate-x-1/2 z-50 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg animate-bounce">
+          ✓ {successMessage}
+        </div>
+      )}
+
+      {/* 保存中提示 */}
+      {isSaving && (
+        <div className="fixed top-16 left-1/2 transform -translate-x-1/2 z-50 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg">
+          保存中...
+        </div>
+      )}
+
+      {/* 错误提示 */}
+      {cloudError && (
+        <div className="fixed top-16 left-1/2 transform -translate-x-1/2 z-50 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg">
+          ✗ {cloudError}
+        </div>
+      )}
       {/* 顶部导航 */}
       <header className="fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-100 shadow-sm safe-area-top">
         <div className="max-w-5xl mx-auto px-3 md:px-4 h-14 md:h-14 flex items-center justify-between">
@@ -309,7 +370,7 @@ export default function App() {
             <TransactionList
               transactions={transactions}
               onEdit={handleEdit}
-              onDelete={deleteTransaction}
+              onDelete={handleDelete}
             />
           </div>
         ) : (

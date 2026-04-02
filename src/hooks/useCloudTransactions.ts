@@ -9,7 +9,7 @@ function transactionToBill(tx: Transaction) {
   return {
     date: tx.date,
     category: `${tx.category} - ${tx.subCategory || ''}`,
-    amount: tx.amount,
+    amount: tx.type === 'income' ? Math.abs(tx.amount) : -Math.abs(tx.amount),
     note: tx.description + (tx.notes ? ` | ${tx.notes}` : ''),
   }
 }
@@ -20,7 +20,7 @@ function transactionToBill(tx: Transaction) {
 function billToTransaction(bill: any): Transaction {
   // 解析 category 字段（格式：主分类 - 子分类）
   const [category, subCategory] = bill.category.split(' - ')
-  
+
   return {
     id: bill._id,
     date: bill.date,
@@ -37,6 +37,8 @@ function billToTransaction(bill: any): Transaction {
 export function useCloudTransactions() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
 
   // 从云端加载账单
   useEffect(() => {
@@ -46,11 +48,17 @@ export function useCloudTransactions() {
   const loadBills = async () => {
     try {
       setLoading(true)
+      setError(null)
+      console.log('开始加载账单...')
+
       const bills = await getBills()
       const txs = bills.map(billToTransaction)
+
+      console.log(`成功加载 ${txs.length} 条账单`)
       setTransactions(txs)
-    } catch (error) {
+    } catch (error: any) {
       console.error('加载账单失败:', error)
+      setError(error?.message || '加载账单失败')
     } finally {
       setLoading(false)
     }
@@ -58,39 +66,78 @@ export function useCloudTransactions() {
 
   const addTransaction = useCallback(async (tx: Omit<Transaction, "id" | "createdAt">) => {
     try {
+      setIsSaving(true)
+      setError(null)
+
+      console.log('开始添加账单:', tx)
       const bill = transactionToBill(tx)
-      await addBill(bill)
-      await loadBills() // 重新加载
-    } catch (error) {
+      const result = await addBill(bill)
+
+      console.log('账单添加成功，ID:', result._id)
+
+      // 重新加载账单列表
+      await loadBills()
+
+      return result
+    } catch (error: any) {
       console.error('添加账单失败:', error)
+      setError(error?.message || '添加账单失败')
       throw error
+    } finally {
+      setIsSaving(false)
     }
   }, [])
 
   const updateTransaction = useCallback(async (id: string, updates: Partial<Transaction>) => {
     try {
+      setIsSaving(true)
+      setError(null)
+
+      console.log('开始更新账单，ID:', id, '更新:', updates)
+
       // 先找到对应的账单
       const tx = transactions.find(t => t.id === id)
-      if (!tx) throw new Error('账单不存在')
+      if (!tx) {
+        throw new Error('账单不存在')
+      }
 
       const updatedTx = { ...tx, ...updates }
       const bill = transactionToBill(updatedTx)
-      
+
       await updateBillDB(id, bill)
-      await loadBills() // 重新加载
-    } catch (error) {
+
+      console.log('账单更新成功')
+
+      // 重新加载账单列表
+      await loadBills()
+    } catch (error: any) {
       console.error('更新账单失败:', error)
+      setError(error?.message || '更新账单失败')
       throw error
+    } finally {
+      setIsSaving(false)
     }
   }, [transactions])
 
   const deleteTransaction = useCallback(async (id: string) => {
     try {
+      setIsSaving(true)
+      setError(null)
+
+      console.log('开始删除账单，ID:', id)
+
       await deleteBillDB(id)
-      await loadBills() // 重新加载
-    } catch (error) {
+
+      console.log('账单删除成功')
+
+      // 重新加载账单列表
+      await loadBills()
+    } catch (error: any) {
       console.error('删除账单失败:', error)
+      setError(error?.message || '删除账单失败')
       throw error
+    } finally {
+      setIsSaving(false)
     }
   }, [])
 
@@ -121,6 +168,8 @@ export function useCloudTransactions() {
   return {
     transactions,
     loading,
+    error,
+    isSaving,
     addTransaction,
     updateTransaction,
     deleteTransaction,
