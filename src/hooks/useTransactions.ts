@@ -98,22 +98,47 @@ const SAMPLE_TRANSACTIONS: Transaction[] = [
 
 export function useTransactions() {
   const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      return JSON.parse(stored)
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      const backup = localStorage.getItem(BACKUP_KEY)
+
+      // 优先从主存储读取
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        console.log('从主存储加载账单，数量:', parsed.length)
+        return parsed
+      }
+
+      // 如果主存储为空，尝试从备份恢复
+      if (backup) {
+        const parsed = JSON.parse(backup)
+        console.log('从备份恢复账单，数量:', parsed.data?.length)
+        return parsed.data || SAMPLE_TRANSACTIONS
+      }
+
+      console.log('使用示例账单')
+      return SAMPLE_TRANSACTIONS
+    } catch (error) {
+      console.error('读取本地账单失败，使用示例数据:', error)
+      return SAMPLE_TRANSACTIONS
     }
-    return SAMPLE_TRANSACTIONS
   })
 
   useEffect(() => {
     try {
+      console.log('保存本地账单，数量:', transactions.length)
+
       // 主存储
       localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions))
+      console.log('主存储保存成功')
+
       // 备份存储（带时间戳）
-      localStorage.setItem(BACKUP_KEY, JSON.stringify({
+      const backupData = {
         timestamp: new Date().toISOString(),
         data: transactions
-      }))
+      }
+      localStorage.setItem(BACKUP_KEY, JSON.stringify(backupData))
+      console.log('备份存储保存成功')
     } catch (error) {
       console.error("保存本地账单失败:", error)
     }

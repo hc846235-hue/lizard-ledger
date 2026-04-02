@@ -40,8 +40,21 @@ export async function initDatabase() {
  */
 export async function getBills(): Promise<Bill[]> {
   try {
-    console.log('开始从云端获取账单...');
-    console.log('当前用户信息:', db.auth.currentUser?.uid, db.auth.currentUser?.openid);
+    console.log('========== 开始从云端获取账单 ==========');
+
+    // 动态导入 auth 实例
+    const { auth } = await import('./cloudbase');
+    console.log('当前用户信息:', {
+      uid: auth.currentUser?.uid,
+      openid: auth.currentUser?.openid,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      loginType: auth.currentUser?.loginType
+    });
+    console.log('认证状态:', {
+      hasUser: !!auth.currentUser,
+      isLogin: auth.currentUser?.isLogin,
+      isLoginExpired: auth.currentUser?.isLoginExpired
+    });
 
     const result = await db.collection(COLLECTION_NAME).get();
     console.log('获取账单成功，文档数量:', result.data.length);
@@ -52,16 +65,21 @@ export async function getBills(): Promise<Bill[]> {
 
     return result.data as Bill[];
   } catch (error: any) {
-    console.error('获取账单失败:', error);
+    console.error('========== 获取账单失败 ==========');
     console.error('错误详情:', {
       message: error?.message,
       code: error?.code,
-      requestId: error?.requestId
+      requestId: error?.requestId,
+      fullError: error
     });
 
     // 如果是权限错误，提示用户
     if (error?.code === 'PERMISSION_DENIED') {
       console.warn('权限被拒绝，请检查 CloudBase 控制台的数据库权限设置');
+      throw new Error('没有读取权限，请检查数据库权限设置（需要设置为：auth != null）');
+    } else if (error?.code === 'UNAUTHENTICATED') {
+      console.warn('用户未登录');
+      throw new Error('用户未登录，请重新登录');
     }
 
     // 返回空数组，让应用可以继续运行
@@ -80,19 +98,36 @@ export async function addBill(bill: Omit<Bill, '_id' | 'createdAt' | 'updatedAt'
       updatedAt: new Date().toISOString(),
     };
 
+    // 动态导入 auth 实例
+    const { auth } = await import('./cloudbase');
+
     console.log('准备添加账单到数据库:');
     console.log('- 集合名称:', COLLECTION_NAME);
     console.log('- 数据:', JSON.stringify(newBill, null, 2));
-    console.log('- 当前用户:', db.auth.currentUser?.uid);
+    console.log('- 当前用户:', auth.currentUser?.uid);
 
     const result = await db.collection(COLLECTION_NAME).add(newBill);
     console.log('数据库添加成功，返回结果:', result);
+    console.log('返回值类型:', typeof result);
 
-    // CloudBase add 方法返回 { id, requestId }
-    const insertedId = (result as any).id || result?._id;
-    console.log('文档ID:', insertedId);
+    // CloudBase add 方法可能返回：
+    // 1. 字符串（文档 ID）
+    // 2. 对象 { id: 'xxx' }
+    // 3. 对象 { _id: 'xxx' }
+    let insertedId: string | undefined;
+
+    if (typeof result === 'string') {
+      // 返回的是字符串 ID
+      insertedId = result;
+    } else if (result && typeof result === 'object') {
+      // 返回的是对象，尝试获取 id 或 _id
+      insertedId = (result as any).id || (result as any)._id;
+    }
+
+    console.log('提取的文档ID:', insertedId);
 
     if (!insertedId) {
+      console.error('无法从返回值中提取 ID，完整返回值:', JSON.stringify(result));
       throw new Error('添加账单成功但未返回 ID');
     }
 
