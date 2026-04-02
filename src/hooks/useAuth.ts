@@ -43,20 +43,44 @@ export function useAuth() {
     // 使用 CloudBase 匿名登录（无需注册，可直接登录）
     try {
       console.log('开始 CloudBase 匿名登录...')
+      
+      // 先检查是否已经登录
+      const currentUser = auth.currentUser
+      if (currentUser) {
+        console.log('用户已经登录，直接使用现有用户信息:', currentUser)
+        console.log('用户 ID:', currentUser?.uid)
+        console.log('用户 openid:', currentUser?.openid)
+
+        // 保存登录状态
+        sessionStorage.setItem(SESSION_KEY, "1")
+        localStorage.setItem(SESSION_KEY + "_cloud", "1")
+
+        return { success: true, user: currentUser }
+      }
+
+      // 如果没有登录，执行匿名登录
       const loginResult = await auth.signInAnonymously()
       console.log('CloudBase 匿名登录成功:', loginResult)
 
-      // 获取当前用户信息
-      const currentUser = auth.currentUser
-      console.log('当前用户信息:', currentUser)
-      console.log('用户 ID:', currentUser?.uid)
-      console.log('用户 openid:', currentUser?.openid)
+      // 等待一段时间，确保用户信息被设置
+      await new Promise(resolve => setTimeout(resolve, 500))
+
+      // 重新获取当前用户信息
+      const userAfterLogin = auth.currentUser
+      console.log('登录后的当前用户信息:', userAfterLogin)
+      console.log('用户 ID:', userAfterLogin?.uid)
+      console.log('用户 openid:', userAfterLogin?.openid)
+
+      if (!userAfterLogin) {
+        console.error('登录成功但无法获取用户信息！')
+        throw new Error('登录成功但无法获取用户信息')
+      }
 
       // 保存登录状态
       sessionStorage.setItem(SESSION_KEY, "1")
       localStorage.setItem(SESSION_KEY + "_cloud", "1")
 
-      return { success: true, user: currentUser }
+      return { success: true, user: userAfterLogin }
     } catch (error: any) {
       console.error('CloudBase 登录失败:', error)
       console.error('错误详情:', {
