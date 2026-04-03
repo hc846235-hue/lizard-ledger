@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react"
-import { Plus, BookOpen, BarChart2, List, LogOut, KeyRound, FileText, Download, Cloud, Database } from "lucide-react"
+import { Plus, BookOpen, BarChart2, List, LogOut, KeyRound, FileText, Download, Cloud, Database, MoreHorizontal, FileJson, FileSpreadsheet } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { StatsCards } from "@/components/StatsCards"
 import { Charts } from "@/components/Charts"
@@ -13,7 +13,7 @@ import { SmartInput } from "@/components/SmartInput"
 import { useTransactions } from "@/hooks/useTransactions"
 import { useAuth } from "@/hooks/useAuth"
 import { useCloudTransactions } from "@/hooks/useCloudTransactions"
-import { exportTransactionsToExcel } from "@/utils/exportExcel"
+import { exportTransactionsToExcel, exportTransactionsToJSON, exportTransactionsToCSV } from "@/utils/exportExcel"
 import type { Transaction } from "@/types"
 
 type Tab = "overview" | "detail" | "report"
@@ -55,6 +55,7 @@ export default function App() {
   const [changePwdOpen, setChangePwdOpen] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [showExportMenu, setShowExportMenu] = useState(false)
 
   // 根据初始化状态设置云端可用性
   const [cloudAvailable, setCloudAvailable] = useState<boolean>(isCloudBaseInitialized)
@@ -433,16 +434,53 @@ export default function App() {
               <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
                 账目明细
               </h2>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5 text-xs"
-                onClick={() => exportTransactionsToExcel(transactions)}
-                disabled={transactions.length === 0}
-              >
-                <Download className="h-3.5 w-3.5" />
-                导出 Excel
-              </Button>
+              <div className="relative">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-xs"
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+                  disabled={transactions.length === 0}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  导出数据
+                  <MoreHorizontal className="h-3.5 w-3.5" />
+                </Button>
+                {showExportMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                    <button
+                      onClick={() => {
+                        exportTransactionsToExcel(transactions)
+                        setShowExportMenu(false)
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                      Excel 文件
+                    </button>
+                    <button
+                      onClick={() => {
+                        exportTransactionsToCSV(transactions)
+                        setShowExportMenu(false)
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      <FileText className="h-4 w-4 text-blue-600" />
+                      CSV 文件
+                    </button>
+                    <button
+                      onClick={() => {
+                        exportTransactionsToJSON(transactions)
+                        setShowExportMenu(false)
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 border-t"
+                    >
+                      <FileJson className="h-4 w-4 text-orange-600" />
+                      JSON 备份
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
             {/* 智能快速记账 */}
             <div className="mb-5">
