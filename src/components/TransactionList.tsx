@@ -138,6 +138,12 @@ export function TransactionList({ transactions, onEdit, onDelete }: TransactionL
           }`}
           onClick={(e) => {
             e.stopPropagation()
+            e.preventDefault()
+            handleDelete(tx.id)
+          }}
+          onTouchEnd={(e) => {
+            e.stopPropagation()
+            e.preventDefault()
             handleDelete(tx.id)
           }}
         >
