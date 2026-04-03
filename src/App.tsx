@@ -23,8 +23,8 @@ type DataSource = "local" | "cloud"
 export default function App() {
   console.log('App component rendering...')
 
-  // 数据源切换 - 默认使用云端存储(数据共享)
-  const [dataSource, setDataSource] = useState<DataSource>("cloud")
+  // 数据源切换 - 默认使用本地存储
+  const [dataSource, setDataSource] = useState<DataSource>("local")
   const localHook = useTransactions()
   const cloudHook = useCloudTransactions()
 

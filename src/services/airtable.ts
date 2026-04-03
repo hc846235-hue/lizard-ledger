@@ -8,7 +8,7 @@ const AIRTABLE_TABLE_NAME = '网格视图';
 // 初始化 Airtable
 // 注意：需要用户提供 Personal Access Token
 const airtable = new Airtable({
-  apiKey: process.env.VITE_AIRTABLE_API_KEY || ''
+  apiKey: import.meta.env.VITE_AIRTABLE_API_KEY || ''
 }).base(AIRTABLE_BASE_ID);
 
 console.log('Airtable 初始化成功');
