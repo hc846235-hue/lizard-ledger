@@ -55,7 +55,6 @@ function billToAirtableFields(bill: Bill): any {
  */
 export async function initDatabase() {
   console.log('Airtable 数据库已就绪');
-  console.log('Base ID:', airtable.baseId);
   console.log('Table Name:', TABLE_NAME);
 }
 
@@ -114,9 +113,9 @@ export async function addBill(bill: Omit<Bill, '_id' | 'createdAt' | 'updatedAt'
     const fields = billToAirtableFields(newBill as Bill);
     const record = await airtable(TABLE_NAME).create(fields);
 
-    console.log('Airtable 添加成功，记录 ID:', record.id);
+    console.log('Airtable 添加成功，记录 ID:', (record as any).id);
 
-    return { ...newBill, _id: record.id };
+    return { ...newBill, _id: (record as any).id };
   } catch (error: any) {
     console.error('添加账单失败:');
     console.error('- 错误信息:', error?.message);
