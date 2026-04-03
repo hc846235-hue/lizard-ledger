@@ -51,7 +51,7 @@ export default function App() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [showExportMenu, setShowExportMenu] = useState(false)
 
-  // 云端始终不可用（CloudBase 已移除）
+  // 云端始终不可用（需要配置 Airtable API Key）
   const cloudAvailable = false
 
   console.log('State initialized:', {
@@ -203,7 +203,7 @@ export default function App() {
               <button
                 onClick={() => {
                   if (!cloudAvailable) {
-                    alert("云端服务不可用，可能原因：\n\n1. 网络连接问题\n2. CloudBase 服务暂时故障\n\n当前已使用本地存储模式，数据保存在浏览器中")
+                    alert("云端存储需要配置 Airtable API Key\n\n步骤：\n1. 在项目根目录创建 .env 文件\n2. 添加 VITE_AIRTABLE_API_KEY=your_api_key\n3. 重启应用\n\n当前已使用本地存储模式")
                     return
                   }
                   setDataSource("cloud")
@@ -245,7 +245,7 @@ export default function App() {
               onClick={() => {
                 const newSource = dataSource === "cloud" ? "local" : "cloud"
                 if (newSource === "cloud" && !cloudAvailable) {
-                  alert("云端服务不可用，可能原因：\n\n1. 网络连接问题\n2. CloudBase 服务暂时故障\n\n当前已使用本地存储模式，数据保存在浏览器中")
+                  alert("云端存储需要配置 Airtable API Key\n\n步骤：\n1. 在项目根目录创建 .env 文件\n2. 添加 VITE_AIRTABLE_API_KEY=your_api_key\n3. 重启应用\n\n当前已使用本地存储模式")
                   return
                 }
                 setDataSource(newSource)
@@ -469,11 +469,11 @@ export default function App() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowLogoutConfirm(false)} />
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-xs p-6 text-center">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
               <Cloud className="h-5 w-5 text-blue-500" />
             </div>
-            <h3 className="text-sm font-semibold text-gray-800 mb-1">切换到云端存储</h3>
-            <p className="text-xs text-gray-400 mb-5">CloudBase 环境已过期，当前使用本地存储</p>
+            <h3 className="text-sm font-semibold text-gray-800 mb-1">配置 Airtable API Key</h3>
+            <p className="text-xs text-gray-400 mb-5">需要配置 Airtable API Key 才能使用云端存储</p>
             <div className="flex gap-2">
               <Button variant="outline" className="flex-1 text-sm" onClick={() => setShowLogoutConfirm(false)}>
                 取消

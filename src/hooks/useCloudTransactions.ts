@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react"
 import type { Transaction } from "../types"
 import { getBills, addBill, updateBill as updateBillDB, deleteBill as deleteBillDB } from "../services/airtableDb"
+import { hasValidApiKey } from "../services/airtable"
 
 /**
  * 将 Transaction 转换为 Bill 格式
@@ -39,12 +40,29 @@ export function useCloudTransactions() {
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
 
+  // 检查 Airtable 是否可用
+  const isAirtableAvailable = hasValidApiKey
+
   // 从云端加载账单
   useEffect(() => {
+    // 如果 Airtable 不可用，不执行任何操作
+    if (!isAirtableAvailable) {
+      console.warn('⚠️ Airtable 不可用，跳过云端数据加载')
+      setLoading(false)
+      return
+    }
+
     loadBills()
-  }, [])
+  }, [isAirtableAvailable])
 
   const loadBills = async (retryCount = 0) => {
+    // 如果 Airtable 不可用，不执行
+    if (!isAirtableAvailable) {
+      console.warn('⚠️ Airtable 不可用，无法加载账单')
+      setLoading(false)
+      return
+    }
+
     try {
       setLoading(true)
       setError(null)
@@ -72,6 +90,12 @@ export function useCloudTransactions() {
   }
 
   const addTransaction = useCallback(async (tx: Omit<Transaction, "id" | "createdAt">) => {
+    // 如果 Airtable 不可用，不执行任何操作
+    if (!isAirtableAvailable) {
+      console.warn('⚠️ Airtable 不可用，无法添加账单')
+      throw new Error('Airtable 不可用，请先配置 API Key')
+    }
+
     try {
       setIsSaving(true)
       setError(null)
@@ -99,9 +123,15 @@ export function useCloudTransactions() {
     } finally {
       setIsSaving(false)
     }
-  }, [])
+  }, [isAirtableAvailable])
 
   const updateTransaction = useCallback(async (id: string, updates: Partial<Transaction>) => {
+    // 如果 Airtable 不可用，不执行任何操作
+    if (!isAirtableAvailable) {
+      console.warn('⚠️ Airtable 不可用，无法更新账单')
+      throw new Error('Airtable 不可用，请先配置 API Key')
+    }
+
     try {
       setIsSaving(true)
       setError(null)
@@ -135,9 +165,15 @@ export function useCloudTransactions() {
     } finally {
       setIsSaving(false)
     }
-  }, [transactions])
+  }, [transactions, isAirtableAvailable])
 
   const deleteTransaction = useCallback(async (id: string) => {
+    // 如果 Airtable 不可用，不执行任何操作
+    if (!isAirtableAvailable) {
+      console.warn('⚠️ Airtable 不可用，无法删除账单')
+      throw new Error('Airtable 不可用，请先配置 API Key')
+    }
+
     try {
       setIsSaving(true)
       setError(null)
@@ -162,7 +198,7 @@ export function useCloudTransactions() {
     } finally {
       setIsSaving(false)
     }
-  }, [])
+  }, [isAirtableAvailable])
 
   const getStats = useCallback(
     (month?: string) => {
