@@ -11,7 +11,6 @@
     "deploy": "node deploy.js"
   },
   "dependencies": {
-    "@cloudbase/js-sdk": "^2.24.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-label": "^1.0.0",
     "@radix-ui/react-select": "^1.2.2",
