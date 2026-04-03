@@ -136,6 +136,10 @@ export function TransactionList({ transactions, onEdit, onDelete }: TransactionL
           className={`absolute right-0 top-0 bottom-0 bg-red-500 text-white flex items-center justify-end pr-6 transition-all duration-200 ${
             isSwiped ? "w-32" : "w-0"
           }`}
+          onClick={(e) => {
+            e.stopPropagation()
+            handleDelete(tx.id)
+          }}
         >
           {showConfirm ? (
             <div className="flex items-center gap-1">
@@ -164,14 +168,13 @@ export function TransactionList({ transactions, onEdit, onDelete }: TransactionL
           <div
             className="flex items-center gap-2 md:gap-3 p-3 md:p-3.5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow group active:bg-gray-50"
             onClick={(e) => {
-              // 如果已滑动，点击删除按钮区域则处理删除
+              // 如果已滑动，不处理点击（删除按钮有自己的点击事件）
               if (isSwiped) {
                 e.stopPropagation()
-                handleDelete(tx.id)
-              } else {
-                // 否则处理编辑
-                onEdit(tx)
+                return
               }
+              // 否则处理编辑
+              onEdit(tx)
             }}
           >
             {/* 图标 */}
