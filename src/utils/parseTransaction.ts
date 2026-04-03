@@ -138,7 +138,7 @@ function parseAmount(text: string): number {
   const wanMatch = text.match(/(\d+(?:\.\d+)?)\s*万/)
   if (wanMatch) return parseFloat(wanMatch[1]) * 10000
 
-  // 匹配带单位的金额：800元、800块、¥800、800rmb、收了800、花了800
+  // 匹配所有数字，包括带单位的金额：800元、800块、¥800、800rmb、收了800、花了800
   // 优先匹配更大的数字(避免误识别数量)
   const amounts: number[] = []
   let match
@@ -150,11 +150,13 @@ function parseAmount(text: string): number {
     if (numMatch) amounts.push(parseFloat(numMatch[1].replace(",", "")))
   }
 
-  // 匹配带单位的金额：800元、800块、¥800
-  const unitMatch = text.match(/[¥￥]?\s*(\d+(?:[.,]\d+)?)\s*(?:元|块|rmb|RMB|cny|CNY)?/)
-  if (unitMatch) {
-    const num = parseFloat(unitMatch[1].replace(",", ""))
-    if (!isNaN(num) && num > 0) amounts.push(num)
+  // 匹配所有带单位的金额，返回所有匹配结果
+  const unitMatches = text.matchAll(/[¥￥]?\s*(\d+(?:[.,]\d+)?)\s*(?:元|块|rmb|RMB|cny|CNY)?/g)
+  if (unitMatches) {
+    for (const m of unitMatches) {
+      const num = parseFloat(m[1].replace(",", ""))
+      if (!isNaN(num) && num > 0) amounts.push(num)
+    }
   }
 
   // 返回最大的金额(避免误识别数量)
