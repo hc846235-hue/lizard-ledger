@@ -49,6 +49,8 @@ jobs:
           df -h
 
       - name: Build
+        env:
+          NODE_ENV: production
         run: npm run build
         continue-on-error: false
 
