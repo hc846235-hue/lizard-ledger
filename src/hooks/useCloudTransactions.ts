@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
 import type { Transaction } from "../types"
-import { getBills, addBill, updateBill as updateBillDB, deleteBill as deleteBillDB } from "../services/db"
+import { getBills, addBill, updateBill as updateBillDB, deleteBill as deleteBillDB } from "../services/airtableDb"
 
 /**
  * 将 Transaction 转换为 Bill 格式
@@ -8,9 +8,11 @@ import { getBills, addBill, updateBill as updateBillDB, deleteBill as deleteBill
 function transactionToBill(tx: Transaction | Omit<Transaction, "id" | "createdAt">) {
   return {
     date: tx.date,
-    category: `${tx.category} - ${tx.subCategory || ''}`,
+    category: tx.category,
     amount: tx.type === 'income' ? Math.abs(tx.amount) : -Math.abs(tx.amount),
-    note: tx.description + (tx.notes ? ` | ${tx.notes}` : ''),
+    note: `${tx.description}${tx.notes ? ` | ${tx.notes}` : ''}`,
+    type: tx.type,
+    subCategory: tx.subCategory || '',
   }
 }
 
@@ -18,15 +20,12 @@ function transactionToBill(tx: Transaction | Omit<Transaction, "id" | "createdAt
  * 将 Bill 转换回 Transaction 格式
  */
 function billToTransaction(bill: any): Transaction {
-  // 解析 category 字段（格式：主分类 - 子分类）
-  const [category, subCategory] = bill.category.split(' - ')
-
   return {
     id: bill._id,
     date: bill.date,
-    type: bill.amount >= 0 ? 'income' : 'expense',
-    category: category.trim(),
-    subCategory: subCategory?.trim() || '',
+    type: bill.type || (bill.amount >= 0 ? 'income' : 'expense'),
+    category: bill.category || '',
+    subCategory: bill.subCategory || '',
     amount: Math.abs(bill.amount),
     description: bill.note?.split(' | ')[0] || '',
     notes: bill.note?.split(' | ')[1] || '',
