@@ -140,12 +140,6 @@ export default function App() {
         </div>
       )}
 
-      {/* 云端状态指示器 */}
-      {!cloudAvailable && (
-        <div className="fixed top-28 left-1/2 transform -translate-x-1/2 z-40 bg-yellow-500 text-white px-3 py-1.5 rounded-lg shadow-lg text-xs">
-          ⚠️ 云端不可用，已使用本地存储
-        </div>
-      )}
       {/* 顶部导航 */}
       <header className="fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-100 shadow-sm safe-area-top">
         <div className="max-w-5xl mx-auto px-3 md:px-4 h-14 md:h-14 flex items-center justify-between">
