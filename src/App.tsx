@@ -1,17 +1,14 @@
 import React, { useState, useEffect } from "react"
-import { Plus, BookOpen, BarChart2, List, LogOut, KeyRound, FileText, Download, Cloud, Database, MoreHorizontal, FileJson, FileSpreadsheet } from "lucide-react"
+import { Plus, BookOpen, BarChart2, List, LogOut, FileText, Download, Cloud, Database, MoreHorizontal, FileJson, FileSpreadsheet } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { StatsCards } from "@/components/StatsCards"
 import { Charts } from "@/components/Charts"
 import { TransactionForm } from "@/components/TransactionForm"
 import { TransactionList } from "@/components/TransactionList"
-import { LoginScreen } from "@/components/LoginScreen"
-import { ChangePasswordDialog } from "@/components/ChangePasswordDialog"
 import { YearReport } from "@/components/YearReport"
 import { MonthReport } from "@/components/MonthReport"
 import { SmartInput } from "@/components/SmartInput"
 import { useTransactions } from "@/hooks/useTransactions"
-import { useAuth } from "@/hooks/useAuth"
 import { useCloudTransactions } from "@/hooks/useCloudTransactions"
 import { exportTransactionsToExcel, exportTransactionsToJSON, exportTransactionsToCSV } from "@/utils/exportExcel"
 import type { Transaction } from "@/types"
@@ -46,91 +43,26 @@ export default function App() {
   const cloudError = isCloud ? cloudData.error : null
   const isSaving = isCloud ? cloudData.isSaving : false
 
-  const { isLoggedIn, login, logout, changePassword, isCloudEnabled, isCloudBaseInitialized } = useAuth()
   const [activeTab, setActiveTab] = useState<Tab>("overview")
   const [reportSubTab, setReportSubTab] = useState<ReportSubTab>("year")
   const [formOpen, setFormOpen] = useState(false)
   const [editData, setEditData] = useState<Transaction | null>(null)
-  const [loggedIn, setLoggedIn] = useState<boolean>(isLoggedIn())
-  const [changePwdOpen, setChangePwdOpen] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [showExportMenu, setShowExportMenu] = useState(false)
 
-  // 根据初始化状态设置云端可用性
-  const [cloudAvailable, setCloudAvailable] = useState<boolean>(isCloudBaseInitialized)
+  // 云端始终不可用（CloudBase 已移除）
+  const cloudAvailable = false
 
   console.log('State initialized:', {
     activeTab,
-    loggedIn,
     dataSource,
     cloudAvailable,
-    isCloudBaseInitialized,
     transactionsCount: transactions.length
   })
 
   const stats = getStats()
   console.log('Stats calculated:', stats)
-
-  // ── 登录处理 ──
-  const handleLogin = async (password: string): Promise<{ success: boolean; error?: string }> => {
-    const result = await login(password)
-
-    if (result.success) {
-      setLoggedIn(true)
-
-      // 检查云端是否可用
-      const cloudReady = isCloudBaseInitialized && isCloudEnabled()
-      setCloudAvailable(cloudReady)
-
-      console.log('登录结果:', {
-        success: result.success,
-        user: result.user,
-        error: result.error,
-        cloudReady,
-        isCloudBaseInitialized
-      })
-
-      // 如果云端不可用，自动切换到本地存储
-      if (!cloudReady && dataSource === 'cloud') {
-        console.warn('云端不可用，自动切换到本地存储')
-        setDataSource('local')
-      }
-
-      // 如果是云端数据源，登录成功后重新加载数据
-      if (dataSource === 'cloud') {
-        console.log('登录成功，重新加载云端数据...')
-        try {
-          await refresh()
-        } catch (error) {
-          console.error('加载云端数据失败:', error)
-          // 如果加载失败，切换到本地存储
-          setDataSource('local')
-          setSuccessMessage('云端数据加载失败，已切换到本地存储')
-          setTimeout(() => setSuccessMessage(null), 3000)
-        }
-      }
-
-      if (result.error) {
-        console.warn('登录警告:', result.error)
-      }
-
-      return {
-        success: true,
-        error: result.error
-      }
-    }
-
-    return {
-      success: false
-    }
-  }
-
-  const handleLogout = async () => {
-    await logout()
-    setLoggedIn(false)
-    setShowLogoutConfirm(false)
-  }
 
   const handleEdit = (tx: Transaction) => {
     setEditData(tx)
@@ -183,11 +115,6 @@ export default function App() {
         alert(`删除失败: ${error?.message || '请稍后重试'}`)
       }
     }
-  }
-
-  // ── 未登录：显示登录页 ──
-  if (!loggedIn) {
-    return <LoginScreen onLogin={handleLogin} />
   }
 
   return (
@@ -537,29 +464,22 @@ export default function App() {
         editData={editData}
       />
 
-      {/* 修改密码弹窗 */}
-      <ChangePasswordDialog
-        open={changePwdOpen}
-        onClose={() => setChangePwdOpen(false)}
-        onSave={changePassword}
-      />
-
       {/* 退出登录确认 */}
       {showLogoutConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowLogoutConfirm(false)} />
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-xs p-6 text-center">
-            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <LogOut className="h-5 w-5 text-red-500" />
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Cloud className="h-5 w-5 text-blue-500" />
             </div>
-            <h3 className="text-sm font-semibold text-gray-800 mb-1">确认退出登录？</h3>
-            <p className="text-xs text-gray-400 mb-5">退出后需要重新输入密码才能访问</p>
+            <h3 className="text-sm font-semibold text-gray-800 mb-1">切换到云端存储</h3>
+            <p className="text-xs text-gray-400 mb-5">CloudBase 环境已过期，当前使用本地存储</p>
             <div className="flex gap-2">
               <Button variant="outline" className="flex-1 text-sm" onClick={() => setShowLogoutConfirm(false)}>
                 取消
               </Button>
-              <Button variant="destructive" className="flex-1 text-sm" onClick={handleLogout}>
-                确认退出
+              <Button variant="destructive" className="flex-1 text-sm" onClick={() => setShowLogoutConfirm(false)}>
+                了解
               </Button>
             </div>
           </div>
