@@ -43,6 +43,9 @@ export function useAuth() {
     // 使用 CloudBase 匿名登录（无需注册，可直接登录）
     try {
       console.log('开始 CloudBase 匿名登录...')
+      console.log('auth 实例类型:', typeof auth)
+      console.log('auth 实例方法列表:', Object.getOwnPropertyNames(Object.getPrototypeOf(auth)))
+      console.log('auth.signInAnonymously 是否存在:', typeof auth.signInAnonymously)
       
       // 先检查是否已经登录
       const currentUser = auth.currentUser
@@ -59,6 +62,11 @@ export function useAuth() {
       }
 
       // 如果没有登录，执行匿名登录
+      if (typeof auth.signInAnonymously !== 'function') {
+        console.error('auth.signInAnonymously 不是函数！auth 实例:', auth)
+        throw new Error('CloudBase SDK 版本不兼容，signInAnonymously 方法不存在')
+      }
+      
       const loginResult = await auth.signInAnonymously()
       console.log('CloudBase 匿名登录成功:', loginResult)
 

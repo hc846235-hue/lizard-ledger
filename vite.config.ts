@@ -4,8 +4,8 @@ import react from "@vitejs/plugin-react"
 
 export default defineConfig({
   plugins: [react()],
-  // CloudBase 静态托管使用根路径
-  base: '/',
+  // CloudBase 静态托管部署路径：/lizard-ledger
+  base: '/lizard-ledger/',
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
