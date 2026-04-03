@@ -67,7 +67,8 @@ export function getAuth() {
 export async function anonymousLogin() {
   try {
     const auth = getAuth();
-    const loginResult = await auth.anonymousAuthProvider().signIn();
+    // 使用新版 SDK API
+    const loginResult = await auth.signInAnonymously();
     console.log('匿名登录成功:', loginResult);
     return loginResult;
   } catch (error) {
