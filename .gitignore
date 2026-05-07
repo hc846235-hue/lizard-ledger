@@ -23,3 +23,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# WorkBuddy 自动化记录（排除避免循环触发）
+.codebuddy/automations/lizard-ledger/memory.md
+.codebuddy/automations/lizard-ledger/append_record.ps1
